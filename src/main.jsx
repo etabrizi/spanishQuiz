@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 import {
   CheckCircle2,
   Download,
+  Flame,
   ListPlus,
   RotateCcw,
   Play,
@@ -25,12 +26,21 @@ const QUESTIONS_URL = '/questions.json';
 const CUSTOM_CARDS_STORAGE_KEY = 'spanish-quiz-custom-cards';
 const REMOVED_BASE_CARDS_STORAGE_KEY = 'spanish-quiz-removed-base-cards';
 const LEADERBOARD_STORAGE_KEY = 'spanish-quiz-leaderboard';
+const BEST_STREAKER_STORAGE_KEY = 'spanish-quiz-best-streaker';
 const VIEW = {
   HOME: 'home',
   QUIZ: 'quiz',
   QUESTIONS: 'questions',
   REVIEW: 'review',
   LEADERBOARD: 'leaderboard'
+};
+const QUIZ_MODE = {
+  NORMAL: 'normal',
+  STREAK: 'streak'
+};
+const QUIZ_MODE_LABEL = {
+  [QUIZ_MODE.NORMAL]: 'Normal',
+  [QUIZ_MODE.STREAK]: 'Streak'
 };
 
 function normalizeAnswer(value) {
@@ -156,6 +166,16 @@ function loadLeaderboard() {
   }
 }
 
+function loadBestStreaker() {
+  try {
+    const streaker = JSON.parse(window.localStorage.getItem(BEST_STREAKER_STORAGE_KEY) ?? 'null');
+
+    return streaker?.name && Number.isFinite(streaker.score) ? streaker : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function saveCustomCards(cards) {
   window.localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(cards));
 }
@@ -166,6 +186,10 @@ function saveRemovedBaseCardKeys(cardKeys) {
 
 function saveLeaderboard(scores) {
   window.localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(scores));
+}
+
+function saveBestStreaker(streaker) {
+  window.localStorage.setItem(BEST_STREAKER_STORAGE_KEY, JSON.stringify(streaker));
 }
 
 function getQuestionPoints(matchType, secondsLeft) {
@@ -207,6 +231,10 @@ function getRoundCards(sourceCards) {
   return shuffleCards(sourceCards).slice(0, Math.min(ROUND_CARD_COUNT, sourceCards.length));
 }
 
+function getModeCards(sourceCards, quizMode) {
+  return quizMode === QUIZ_MODE.STREAK ? shuffleCards(sourceCards) : getRoundCards(sourceCards);
+}
+
 function App() {
   const [view, setView] = useState(VIEW.HOME);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
@@ -222,7 +250,10 @@ function App() {
   const [newAnswer, setNewAnswer] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [nameDraft, setNameDraft] = useState('');
+  const [quizMode, setQuizMode] = useState(QUIZ_MODE.NORMAL);
   const [score, setScore] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [feedback, setFeedback] = useState(null);
@@ -230,12 +261,16 @@ function App() {
   const [lastRoundSummary, setLastRoundSummary] = useState(null);
   const [deckMessage, setDeckMessage] = useState('Loading questions...');
   const [leaderboard, setLeaderboard] = useState(() => loadLeaderboard());
+  const [bestStreaker, setBestStreaker] = useState(() => loadBestStreaker());
   const shellRef = useRef(null);
   const inputRef = useRef(null);
   const playerNameInputRef = useRef(null);
   const nextButtonRef = useRef(null);
   const answerRef = useRef('');
   const roundResultsRef = useRef([]);
+  const quizModeRef = useRef(QUIZ_MODE.NORMAL);
+  const bestStreakRef = useRef(0);
+  const currentStreakRef = useRef(0);
 
   const currentCard = cards[cardIndex];
   const visibleBaseCards = useMemo(
@@ -282,17 +317,33 @@ function App() {
     answerRef.current = answer;
   }, [answer]);
 
+  useEffect(() => {
+    quizModeRef.current = quizMode;
+  }, [quizMode]);
+
+  useEffect(() => {
+    currentStreakRef.current = currentStreak;
+  }, [currentStreak]);
+
+  useEffect(() => {
+    bestStreakRef.current = bestStreak;
+  }, [bestStreak]);
+
   function resetRound(nextSourceCards = sourceCards) {
     setSourceCards(nextSourceCards);
-    setCards(getRoundCards(nextSourceCards));
+    setCards(getModeCards(nextSourceCards, quizModeRef.current));
     setCardIndex(0);
     setAnswer('');
     setScore(0);
+    setCurrentStreak(0);
+    setBestStreak(0);
     setCorrectCount(0);
     setSecondsLeft(ROUND_SECONDS);
     setFeedback(null);
     setRoundResults([]);
     roundResultsRef.current = [];
+    currentStreakRef.current = 0;
+    bestStreakRef.current = 0;
   }
 
   function addRoundResult(result) {
@@ -304,12 +355,34 @@ function App() {
     return nextResults;
   }
 
+  function getRoundScore() {
+    return quizModeRef.current === QUIZ_MODE.STREAK ? bestStreakRef.current : score;
+  }
+
+  function recordBestStreaker(nextStreak, nextCorrectCount) {
+    if (quizMode !== QUIZ_MODE.STREAK || nextStreak <= (bestStreaker?.score ?? 0)) {
+      return;
+    }
+
+    const nextBestStreaker = {
+      name: playerName.trim(),
+      score: nextStreak,
+      correct: nextCorrectCount,
+      total: nextCorrectCount,
+      date: new Date().toLocaleDateString()
+    };
+
+    setBestStreaker(nextBestStreaker);
+    saveBestStreaker(nextBestStreaker);
+  }
+
   function finishRound(finalScore, finalCorrectCount, finalResults) {
     const nextEntry = {
       name: playerName.trim(),
+      mode: quizModeRef.current,
       score: finalScore,
       correct: finalCorrectCount,
-      total: cards.length,
+      total: quizModeRef.current === QUIZ_MODE.STREAK ? finalResults.length : cards.length,
       date: new Date().toLocaleDateString()
     };
     const nextLeaderboard = [nextEntry, ...leaderboard]
@@ -320,9 +393,11 @@ function App() {
     saveLeaderboard(nextLeaderboard);
     setLastRoundSummary({
       name: playerName.trim(),
+      mode: quizModeRef.current,
       score: finalScore,
+      bestStreak: bestStreakRef.current,
       correct: finalCorrectCount,
-      total: cards.length,
+      total: quizModeRef.current === QUIZ_MODE.STREAK ? finalResults.length : cards.length,
       results: finalResults
     });
     resetRound(sourceCards);
@@ -393,12 +468,16 @@ function App() {
         if (current <= 1) {
           window.clearInterval(timerId);
           const acceptedAnswers = getCardAnswers(currentCard);
+          const finalCorrectCount = currentStreakRef.current;
+          currentStreakRef.current = 0;
+          setCurrentStreak(0);
           const nextResults = addRoundResult({
             question: getCardQuestion(currentCard),
             acceptedAnswers,
             userAnswer: answerRef.current.trim(),
             status: 'missed',
-            points: 0
+            points: 0,
+            streak: 0
           });
 
           setFeedback({
@@ -406,6 +485,11 @@ function App() {
             text: `Time's up. Answer: ${acceptedAnswers.join(' / ')}`,
             results: nextResults
           });
+
+          if (quizModeRef.current === QUIZ_MODE.STREAK) {
+            window.setTimeout(() => finishRound(bestStreakRef.current, finalCorrectCount, nextResults), 850);
+          }
+
           return 0;
         }
 
@@ -426,17 +510,22 @@ function App() {
     }
 
     setPlayerName(nextName);
+    resetRound(sourceCards);
     setView(VIEW.QUIZ);
   }
 
   function goToNextCard(
-    finalScore = score,
+    finalScore = getRoundScore(),
     finalCorrectCount = correctCount,
     finalResults = roundResultsRef.current
   ) {
     const isLastCard = cardIndex === cards.length - 1;
 
-    if (isLastCard) {
+    if (quizModeRef.current === QUIZ_MODE.STREAK && isLastCard) {
+      setCards((currentCards) => [...currentCards, ...shuffleCards(sourceCards)]);
+    }
+
+    if (quizModeRef.current !== QUIZ_MODE.STREAK && isLastCard) {
       finishRound(finalScore, finalCorrectCount, finalResults);
       return;
     }
@@ -460,34 +549,48 @@ function App() {
     if (answerMatch !== 'wrong') {
       const questionPoints = getQuestionPoints(answerMatch, secondsLeft);
       const nextScore = score + questionPoints;
+      const nextStreak = currentStreak + 1;
+      const nextBestStreak = Math.max(bestStreak, nextStreak);
+      const nextRoundScore = quizMode === QUIZ_MODE.STREAK ? nextBestStreak : nextScore;
       const nextCorrectCount = correctCount + 1;
       const nextResults = addRoundResult({
         question: getCardQuestion(currentCard),
         acceptedAnswers: correctAnswers,
         userAnswer: answer.trim(),
         status: answerMatch,
-        points: questionPoints
+        points: questionPoints,
+        streak: nextStreak
       });
 
       setScore(nextScore);
+      setCurrentStreak(nextStreak);
+      setBestStreak(nextBestStreak);
+      currentStreakRef.current = nextStreak;
+      bestStreakRef.current = nextBestStreak;
       setCorrectCount(nextCorrectCount);
+      recordBestStreaker(nextStreak, nextCorrectCount);
       setFeedback({
         type: answerMatch === 'exact' ? 'correct' : 'close',
         text:
-          answerMatch === 'exact'
-            ? `Correct. ${questionPoints} points added.`
-            : `Close enough. ${questionPoints} points added.`
+          quizMode === QUIZ_MODE.STREAK
+            ? `${answerMatch === 'exact' ? 'Correct' : 'Close enough'}. Streak: ${nextStreak}.`
+            : answerMatch === 'exact'
+              ? `Correct. ${questionPoints} points added.`
+              : `Close enough. ${questionPoints} points added.`
       });
-      window.setTimeout(() => goToNextCard(nextScore, nextCorrectCount, nextResults), 850);
+      window.setTimeout(() => goToNextCard(nextRoundScore, nextCorrectCount, nextResults), 850);
       return;
     }
 
+    currentStreakRef.current = 0;
+    setCurrentStreak(0);
     const nextResults = addRoundResult({
       question: getCardQuestion(currentCard),
       acceptedAnswers: correctAnswers,
       userAnswer: answer.trim(),
       status: 'wrong',
-      points: 0
+      points: 0,
+      streak: 0
     });
 
     setFeedback({
@@ -495,6 +598,10 @@ function App() {
       text: `Not quite. Answer: ${correctAnswers.join(' / ')}`,
       results: nextResults
     });
+
+    if (quizMode === QUIZ_MODE.STREAK) {
+      window.setTimeout(() => finishRound(bestStreakRef.current, correctCount, nextResults), 850);
+    }
   }
 
   function restartGame() {
@@ -506,7 +613,9 @@ function App() {
 
   function resetLeaderboard() {
     setLeaderboard([]);
+    setBestStreaker(null);
     window.localStorage.removeItem(LEADERBOARD_STORAGE_KEY);
+    window.localStorage.removeItem(BEST_STREAKER_STORAGE_KEY);
   }
 
   function addCustomCard(event) {
@@ -610,6 +719,29 @@ function App() {
         )}
 
         {view === VIEW.HOME && (
+          <div className="mode-selector" aria-label="Quiz mode">
+            <button
+              className={quizMode === QUIZ_MODE.NORMAL ? 'active' : ''}
+              type="button"
+              onClick={() => setQuizMode(QUIZ_MODE.NORMAL)}
+              aria-label="Normal mode"
+              title="Normal mode"
+            >
+              <Trophy size={18} />
+            </button>
+            <button
+              className={quizMode === QUIZ_MODE.STREAK ? 'active' : ''}
+              type="button"
+              onClick={() => setQuizMode(QUIZ_MODE.STREAK)}
+              aria-label="Streak mode"
+              title="Streak mode"
+            >
+              <Flame size={18} />
+            </button>
+          </div>
+        )}
+
+        {view === VIEW.HOME && (
           <section className="home-screen" aria-label="Player setup">
             <form className="player-form" onSubmit={savePlayer}>
               <label htmlFor="player-name">Player name</label>
@@ -633,21 +765,26 @@ function App() {
 
         {view === VIEW.QUIZ && (
           <>
-            <div className="stats" aria-label="Game stats">
+            <div className={`stats ${quizMode === QUIZ_MODE.STREAK ? 'is-streak' : ''}`} aria-label="Game stats">
               <div>
                 <span>Player</span>
                 <strong>{playerName || 'Guest'}</strong>
               </div>
               <div>
-                <span>Score</span>
-                <strong>{score}</strong>
-              </div>
-              <div>
-                <span>Card</span>
+                <span>{quizMode === QUIZ_MODE.STREAK ? 'Streak' : 'Score'}</span>
                 <strong>
-                  {cardIndex + 1}/{cards.length}
+                  {quizMode === QUIZ_MODE.STREAK && <Flame size={18} />}
+                  {quizMode === QUIZ_MODE.STREAK ? currentStreak : score}
                 </strong>
               </div>
+              {quizMode !== QUIZ_MODE.STREAK && (
+                <div>
+                  <span>Card</span>
+                  <strong>
+                    {cardIndex + 1}/{cards.length}
+                  </strong>
+                </div>
+              )}
               <div className={secondsLeft <= 3 ? 'urgent' : ''}>
                 <span>Time</span>
                 <strong>
@@ -657,9 +794,11 @@ function App() {
               </div>
             </div>
 
-            <div className="progress-track" aria-hidden="true">
-              <div className="progress-fill" style={{ width: `${progress}%` }} />
-            </div>
+            {quizMode !== QUIZ_MODE.STREAK && (
+              <div className="progress-track" aria-hidden="true">
+                <div className="progress-fill" style={{ width: `${progress}%` }} />
+              </div>
+            )}
 
             <article className="flash-card">
               <span>Question</span>
@@ -693,8 +832,12 @@ function App() {
                   <XCircle size={20} />
                 )}
                 <span>{feedback.text}</span>
-                {feedback.type !== 'correct' && feedback.type !== 'close' && (
-                  <button ref={nextButtonRef} type="button" onClick={() => goToNextCard(score, correctCount, feedback.results)}>
+                {quizMode !== QUIZ_MODE.STREAK && feedback.type !== 'correct' && feedback.type !== 'close' && (
+                  <button
+                    ref={nextButtonRef}
+                    type="button"
+                    onClick={() => goToNextCard(undefined, correctCount, feedback.results)}
+                  >
                     Next
                   </button>
                 )}
@@ -828,7 +971,7 @@ function App() {
                 <strong>{lastRoundSummary.name}</strong>
               </div>
               <div>
-                <span>Score</span>
+                <span>{lastRoundSummary.mode === QUIZ_MODE.STREAK ? 'Best streak' : 'Score'}</span>
                 <strong>{lastRoundSummary.score}</strong>
               </div>
             </div>
@@ -847,7 +990,7 @@ function App() {
                       You: {result.userAnswer || 'No answer'} · Answer: {result.acceptedAnswers.join(' / ')}
                     </span>
                   </div>
-                  <b>{result.points}</b>
+                  {lastRoundSummary.mode !== QUIZ_MODE.STREAK && <b>{result.points}</b>}
                 </div>
               ))}
             </div>
@@ -872,6 +1015,22 @@ function App() {
               <span>Top 10</span>
             </div>
 
+            {bestStreaker && (
+              <div className="best-streaker">
+                <div>
+                  <span>Best streaker</span>
+                  <strong>{bestStreaker.name}</strong>
+                  <small>
+                    {bestStreaker.correct}/{bestStreaker.total} correct - {bestStreaker.date}
+                  </small>
+                </div>
+                <b>
+                  <Flame size={20} />
+                  {bestStreaker.score}
+                </b>
+              </div>
+            )}
+
             {leaderboard.length === 0 ? (
               <p className="empty-state">No scores yet.</p>
             ) : (
@@ -882,7 +1041,8 @@ function App() {
                     <div>
                       <span>{entry.name}</span>
                       <small>
-                        {entry.correct}/{entry.total} correct - {entry.date}
+                        {QUIZ_MODE_LABEL[entry.mode] ?? QUIZ_MODE_LABEL[QUIZ_MODE.NORMAL]} - {entry.correct}/
+                        {entry.total} correct - {entry.date}
                       </small>
                     </div>
                     <b>{entry.score}</b>
