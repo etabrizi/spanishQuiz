@@ -307,6 +307,11 @@ h1 {
   gap: 10px;
 }
 
+.answer-stack {
+  display: grid;
+  gap: 12px;
+}
+
 .answer-form label {
   color: #4f5f57;
   font-size: 0.9rem;
@@ -791,6 +796,14 @@ input:disabled {
   .home-actions,
   .review-summary {
     grid-template-columns: 1fr;
+  }
+
+  .answer-form {
+    order: 2;
+  }
+
+  .feedback {
+    order: 1;
   }
 
   .screen-nav button,

@@ -278,6 +278,10 @@ function App() {
     [baseCards, removedBaseCardKeys]
   );
   const progress = useMemo(() => (cards.length ? ((cardIndex + 1) / cards.length) * 100 : 0), [cardIndex, cards.length]);
+  const normalLeaderboard = useMemo(
+    () => leaderboard.filter((entry) => (entry.mode ?? QUIZ_MODE.NORMAL) === QUIZ_MODE.NORMAL),
+    [leaderboard]
+  );
 
   useLayoutEffect(() => {
     if (!shellRef.current) {
@@ -805,44 +809,46 @@ function App() {
               <p>{getCardQuestion(currentCard)}</p>
             </article>
 
-            <form className="answer-form" onSubmit={checkAnswer}>
-              <label htmlFor="answer">Answer</label>
-              <div className="answer-row">
-                <input
-                  ref={inputRef}
-                  id="answer"
-                  type="text"
-                  value={answer}
-                  onChange={(event) => setAnswer(event.target.value)}
-                  placeholder="Type the English word"
-                  autoComplete="off"
-                  disabled={Boolean(feedback)}
-                />
-                <button type="submit" disabled={Boolean(feedback)}>
-                  Check
-                </button>
-              </div>
-            </form>
-
-            {feedback && (
-              <div className={`feedback ${feedback.type}`} role="status">
-                {feedback.type === 'correct' || feedback.type === 'close' ? (
-                  <CheckCircle2 size={20} />
-                ) : (
-                  <XCircle size={20} />
-                )}
-                <span>{feedback.text}</span>
-                {quizMode !== QUIZ_MODE.STREAK && feedback.type !== 'correct' && feedback.type !== 'close' && (
-                  <button
-                    ref={nextButtonRef}
-                    type="button"
-                    onClick={() => goToNextCard(undefined, correctCount, feedback.results)}
-                  >
-                    Next
+            <div className="answer-stack">
+              <form className="answer-form" onSubmit={checkAnswer}>
+                <label htmlFor="answer">Answer</label>
+                <div className="answer-row">
+                  <input
+                    ref={inputRef}
+                    id="answer"
+                    type="text"
+                    value={answer}
+                    onChange={(event) => setAnswer(event.target.value)}
+                    placeholder="Type the English word"
+                    autoComplete="off"
+                    disabled={Boolean(feedback)}
+                  />
+                  <button type="submit" disabled={Boolean(feedback)}>
+                    Check
                   </button>
-                )}
-              </div>
-            )}
+                </div>
+              </form>
+
+              {feedback && (
+                <div className={`feedback ${feedback.type}`} role="status">
+                  {feedback.type === 'correct' || feedback.type === 'close' ? (
+                    <CheckCircle2 size={20} />
+                  ) : (
+                    <XCircle size={20} />
+                  )}
+                  <span>{feedback.text}</span>
+                  {quizMode !== QUIZ_MODE.STREAK && feedback.type !== 'correct' && feedback.type !== 'close' && (
+                    <button
+                      ref={nextButtonRef}
+                      type="button"
+                      onClick={() => goToNextCard(undefined, correctCount, feedback.results)}
+                    >
+                      Next
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </>
         )}
 
@@ -1031,18 +1037,17 @@ function App() {
               </div>
             )}
 
-            {leaderboard.length === 0 ? (
+            {normalLeaderboard.length === 0 ? (
               <p className="empty-state">No scores yet.</p>
             ) : (
               <div className="leaderboard-list">
-                {leaderboard.map((entry, index) => (
+                {normalLeaderboard.map((entry, index) => (
                   <div className="leaderboard-row" key={`${entry.name}-${entry.score}-${entry.date}-${index}`}>
                     <strong>{index + 1}</strong>
                     <div>
                       <span>{entry.name}</span>
                       <small>
-                        {QUIZ_MODE_LABEL[entry.mode] ?? QUIZ_MODE_LABEL[QUIZ_MODE.NORMAL]} - {entry.correct}/
-                        {entry.total} correct - {entry.date}
+                        {entry.correct}/{entry.total} correct - {entry.date}
                       </small>
                     </div>
                     <b>{entry.score}</b>
