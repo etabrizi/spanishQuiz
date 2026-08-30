@@ -11,6 +11,7 @@ body {
     radial-gradient(circle at top left, rgba(252, 190, 112, 0.28), transparent 32rem),
     linear-gradient(135deg, #f7fbf2 0%, #edf4f8 48%, #fff6e8 100%);
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 button,
@@ -25,6 +26,7 @@ button {
 .app {
   position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -742,15 +744,35 @@ input:disabled {
 
 @media (max-width: 560px) {
   .app {
-    padding: 14px;
+    display: block;
+    padding: 0;
+    overflow: auto;
   }
 
   .quiz-shell {
-    padding: 18px 18px 18px 38px;
+    width: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-content: start;
+    gap: 16px;
+    padding: 22px 18px 22px 38px;
+    border-radius: 0;
+    box-shadow: none;
   }
 
   .quiz-shell.is-playing {
-    padding: 18px 18px 18px 38px;
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 22px 18px 22px 38px;
+  }
+
+  .mode-selector {
+    top: 16px;
+    right: 16px;
+  }
+
+  .deck-message {
+    margin-bottom: 36px;
   }
 
   .stats {
@@ -762,7 +784,7 @@ input:disabled {
   }
 
   .screen-nav {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .answer-row,
@@ -771,8 +793,14 @@ input:disabled {
     grid-template-columns: 1fr;
   }
 
+  .screen-nav button,
+  .home-actions button,
+  .player-form button,
   .answer-row button,
-  .editor-row button {
+  .editor-row button,
+  .download-questions-button,
+  .restore-questions-button,
+  .reset-leaderboard-button {
     width: 100%;
   }
 
