@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client';
 import { gsap } from 'gsap';
 import {
   CheckCircle2,
+  Download,
   ListPlus,
+  RotateCcw,
   Play,
   Plus,
   Timer,
@@ -21,6 +23,7 @@ const ROUND_SECONDS = 10;
 const ROUND_CARD_COUNT = 20;
 const QUESTIONS_URL = '/questions.json';
 const CUSTOM_CARDS_STORAGE_KEY = 'spanish-quiz-custom-cards';
+const REMOVED_BASE_CARDS_STORAGE_KEY = 'spanish-quiz-removed-base-cards';
 const LEADERBOARD_STORAGE_KEY = 'spanish-quiz-leaderboard';
 const VIEW = {
   HOME: 'home',
@@ -87,11 +90,18 @@ function getCardAnswer(card) {
   return getCardAnswers(card)[0];
 }
 
+function splitAnswerText(answer) {
+  return String(answer ?? '')
+    .split(/[\/,]/)
+    .map((answerPart) => answerPart.trim())
+    .filter(Boolean);
+}
+
 function getCardAnswers(card) {
   const rawAnswers = card.answers ?? card.answer ?? card.english;
   const answers = Array.isArray(rawAnswers) ? rawAnswers : [rawAnswers];
 
-  return answers.map((answer) => String(answer ?? '').trim()).filter(Boolean);
+  return [...new Set(answers.flatMap(splitAnswerText))];
 }
 
 function sanitizeCards(cards) {
@@ -107,9 +117,23 @@ function sanitizeCards(cards) {
     .filter((card) => card.question && card.answers.length);
 }
 
+function getCardKey(card) {
+  return `${normalizeAnswer(getCardQuestion(card) ?? '')}|${getCardAnswers(card).map(normalizeAnswer).join('|')}`;
+}
+
 function loadStoredCards(key) {
   try {
     return sanitizeCards(JSON.parse(window.localStorage.getItem(key) ?? '[]'));
+  } catch (error) {
+    return [];
+  }
+}
+
+function loadStoredCardKeys(key) {
+  try {
+    const storedKeys = JSON.parse(window.localStorage.getItem(key) ?? '[]');
+
+    return Array.isArray(storedKeys) ? storedKeys.filter((keyValue) => typeof keyValue === 'string') : [];
   } catch (error) {
     return [];
   }
@@ -125,7 +149,7 @@ function loadLeaderboard() {
 
     return scores
       .filter((entry) => entry.name && Number.isFinite(entry.score))
-      .sort((first, second) => second.score - first.score)
+      .sort(compareLeaderboardEntries)
       .slice(0, 10);
   } catch (error) {
     return [];
@@ -134,6 +158,10 @@ function loadLeaderboard() {
 
 function saveCustomCards(cards) {
   window.localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(cards));
+}
+
+function saveRemovedBaseCardKeys(cardKeys) {
+  window.localStorage.setItem(REMOVED_BASE_CARDS_STORAGE_KEY, JSON.stringify(cardKeys));
 }
 
 function saveLeaderboard(scores) {
@@ -152,6 +180,25 @@ function getQuestionPoints(matchType, secondsLeft) {
   return 0;
 }
 
+function compareLeaderboardEntries(first, second) {
+  const firstCorrect = Number.isFinite(first.correct) ? first.correct : 0;
+  const secondCorrect = Number.isFinite(second.correct) ? second.correct : 0;
+  const firstTotal = Number.isFinite(first.total) && first.total > 0 ? first.total : 1;
+  const secondTotal = Number.isFinite(second.total) && second.total > 0 ? second.total : 1;
+  const firstAccuracy = firstCorrect / firstTotal;
+  const secondAccuracy = secondCorrect / secondTotal;
+
+  if (secondAccuracy !== firstAccuracy) {
+    return secondAccuracy - firstAccuracy;
+  }
+
+  if (secondCorrect !== firstCorrect) {
+    return secondCorrect - firstCorrect;
+  }
+
+  return second.score - first.score;
+}
+
 function shuffleCards(cards) {
   return [...cards].sort(() => Math.random() - 0.5);
 }
@@ -164,6 +211,9 @@ function App() {
   const [view, setView] = useState(VIEW.HOME);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
   const [customCards, setCustomCards] = useState(() => loadStoredCards(CUSTOM_CARDS_STORAGE_KEY));
+  const [removedBaseCardKeys, setRemovedBaseCardKeys] = useState(() =>
+    loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY)
+  );
   const [sourceCards, setSourceCards] = useState(FALLBACK_CARDS);
   const [cards, setCards] = useState(() => shuffleCards(FALLBACK_CARDS));
   const [cardIndex, setCardIndex] = useState(0);
@@ -188,7 +238,11 @@ function App() {
   const roundResultsRef = useRef([]);
 
   const currentCard = cards[cardIndex];
-  const progress = useMemo(() => ((cardIndex + 1) / cards.length) * 100, [cardIndex, cards.length]);
+  const visibleBaseCards = useMemo(
+    () => baseCards.filter((card) => !removedBaseCardKeys.includes(getCardKey(card))),
+    [baseCards, removedBaseCardKeys]
+  );
+  const progress = useMemo(() => (cards.length ? ((cardIndex + 1) / cards.length) * 100 : 0), [cardIndex, cards.length]);
 
   useLayoutEffect(() => {
     if (!shellRef.current) {
@@ -259,7 +313,7 @@ function App() {
       date: new Date().toLocaleDateString()
     };
     const nextLeaderboard = [nextEntry, ...leaderboard]
-      .sort((first, second) => second.score - first.score)
+      .sort(compareLeaderboardEntries)
       .slice(0, 10);
 
     setLeaderboard(nextLeaderboard);
@@ -277,7 +331,7 @@ function App() {
     setView(VIEW.REVIEW);
   }
 
-  function replaceCustomCards(nextCustomCards, nextBaseCards = baseCards) {
+  function replaceCustomCards(nextCustomCards, nextBaseCards = visibleBaseCards) {
     const sanitizedCustomCards = sanitizeCards(nextCustomCards);
     const nextSourceCards = [...nextBaseCards, ...sanitizedCustomCards];
 
@@ -304,17 +358,23 @@ function App() {
           throw new Error('No valid cards found');
         }
 
-        const nextSourceCards = [...importedCards, ...savedCustomCards];
+        const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
+        const nextBaseCards = importedCards.filter((card) => !removedCardKeys.includes(getCardKey(card)));
+        const nextSourceCards = [...nextBaseCards, ...savedCustomCards];
 
         setBaseCards(importedCards);
         setCustomCards(savedCustomCards);
+        setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
         setDeckMessage(`${nextSourceCards.length} questions loaded.`);
       } catch (error) {
-        const nextSourceCards = [...FALLBACK_CARDS, ...savedCustomCards];
+        const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
+        const nextBaseCards = FALLBACK_CARDS.filter((card) => !removedCardKeys.includes(getCardKey(card)));
+        const nextSourceCards = [...nextBaseCards, ...savedCustomCards];
 
         setBaseCards(FALLBACK_CARDS);
         setCustomCards(savedCustomCards);
+        setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
         setDeckMessage(`${nextSourceCards.length} questions loaded.`);
       }
@@ -361,7 +421,7 @@ function App() {
 
     const nextName = nameDraft.trim();
 
-    if (!nextName) {
+    if (!nextName || !sourceCards.length) {
       return;
     }
 
@@ -454,10 +514,10 @@ function App() {
 
     const nextCard = {
       question: newQuestion.trim(),
-      answer: newAnswer.trim()
+      answers: splitAnswerText(newAnswer)
     };
 
-    if (!nextCard.question || !nextCard.answer) {
+    if (!nextCard.question || !nextCard.answers.length) {
       return;
     }
 
@@ -468,6 +528,36 @@ function App() {
 
   function deleteCustomCard(indexToDelete) {
     replaceCustomCards(customCards.filter((_, index) => index !== indexToDelete));
+  }
+
+  function deleteBaseCard(cardToDelete) {
+    const nextRemovedBaseCardKeys = [...new Set([...removedBaseCardKeys, getCardKey(cardToDelete)])];
+    const nextBaseCards = baseCards.filter((card) => !nextRemovedBaseCardKeys.includes(getCardKey(card)));
+    const nextSourceCards = [...nextBaseCards, ...customCards];
+
+    saveRemovedBaseCardKeys(nextRemovedBaseCardKeys);
+    setRemovedBaseCardKeys(nextRemovedBaseCardKeys);
+    resetRound(nextSourceCards);
+    setDeckMessage(`${nextSourceCards.length} questions ready.`);
+  }
+
+  function restoreBaseCards() {
+    window.localStorage.removeItem(REMOVED_BASE_CARDS_STORAGE_KEY);
+    setRemovedBaseCardKeys([]);
+    resetRound([...baseCards, ...customCards]);
+    setDeckMessage(`${baseCards.length + customCards.length} questions ready.`);
+  }
+
+  function downloadQuestionData() {
+    const jsonContent = JSON.stringify(sourceCards, null, 2);
+    const blob = new Blob([`${jsonContent}\n`], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = 'questions.json';
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -506,7 +596,7 @@ function App() {
               onClick={() => setView(VIEW.QUESTIONS)}
             >
               <ListPlus size={18} />
-              Add
+              Manage
             </button>
             <button
               className={view === VIEW.LEADERBOARD ? 'active' : ''}
@@ -532,7 +622,7 @@ function App() {
                   onChange={(event) => setNameDraft(event.target.value)}
                   autoComplete="name"
                 />
-                <button type="submit">
+                <button type="submit" disabled={!sourceCards.length}>
                   <Play size={18} />
                   Start
                 </button>
@@ -614,11 +704,21 @@ function App() {
         )}
 
         {view === VIEW.QUESTIONS && (
-          <section className="card-editor" aria-label="Add custom questions">
+          <section className="card-editor" aria-label="Manage questions">
             <div className="editor-heading">
-              <h2>Add questions</h2>
-              <span>{customCards.length} saved</span>
+              <h2>Manage words</h2>
+              <span>{sourceCards.length} active</span>
             </div>
+
+            <button
+              className="download-questions-button"
+              type="button"
+              onClick={downloadQuestionData}
+              disabled={!sourceCards.length}
+            >
+              <Download size={18} />
+              Download JSON
+            </button>
 
             <form className="editor-form" onSubmit={addCustomCard}>
               <label htmlFor="new-question">Question</label>
@@ -638,7 +738,7 @@ function App() {
                   type="text"
                   value={newAnswer}
                   onChange={(event) => setNewAnswer(event.target.value)}
-                  placeholder="e.g. good morning"
+                  placeholder="e.g. good morning / good day"
                   autoComplete="off"
                 />
                 <button type="submit" aria-label="Add question">
@@ -648,7 +748,49 @@ function App() {
               </div>
             </form>
 
-            {customCards.length > 0 && (
+            <div className="editor-heading">
+              <h2>Question data</h2>
+              <span>{visibleBaseCards.length} showing</span>
+            </div>
+
+            {visibleBaseCards.length === 0 ? (
+              <p className="empty-state">No question data words showing.</p>
+            ) : (
+              <div className="custom-card-list">
+                {visibleBaseCards.map((card, index) => (
+                  <div className="custom-card-item" key={`${getCardKey(card)}-${index}`}>
+                    <div>
+                      <strong>{getCardQuestion(card)}</strong>
+                      <span>{getCardAnswers(card).join(' / ')}</span>
+                    </div>
+                    <button
+                      className="delete-button"
+                      type="button"
+                      onClick={() => deleteBaseCard(card)}
+                      aria-label={`Remove ${getCardQuestion(card)}`}
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {removedBaseCardKeys.length > 0 && (
+              <button className="restore-questions-button" type="button" onClick={restoreBaseCards}>
+                <RotateCcw size={18} />
+                Restore question data
+              </button>
+            )}
+
+            <div className="editor-heading">
+              <h2>Added words</h2>
+              <span>{customCards.length} saved</span>
+            </div>
+
+            {customCards.length === 0 ? (
+              <p className="empty-state">No added words yet.</p>
+            ) : (
               <div className="custom-card-list">
                 {customCards.map((card, index) => (
                   <div className="custom-card-item" key={`${card.question}-${getCardAnswer(card)}-${index}`}>

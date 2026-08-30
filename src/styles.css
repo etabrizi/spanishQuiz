@@ -37,8 +37,10 @@ button {
   width: min(100%, var(--shell-width));
   display: grid;
   gap: 18px;
-  padding: 28px;
+  padding: 28px 28px 28px 48px;
   border: 1px solid rgba(23, 33, 29, 0.12);
+  border-left: 20px solid transparent;
+  border-image: linear-gradient(180deg, #aa151b 0 25%, #f1bf00 25% 75%, #aa151b 75% 100%) 1;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.86);
   box-shadow: 0 24px 70px rgba(55, 78, 65, 0.14);
@@ -48,7 +50,7 @@ button {
 
 .quiz-shell.is-playing {
   gap: 20px;
-  padding: 32px;
+  padding: 32px 32px 32px 52px;
   box-shadow: 0 30px 86px rgba(55, 78, 65, 0.18);
 }
 
@@ -405,7 +407,7 @@ input:disabled {
 .custom-card-list {
   display: grid;
   gap: 8px;
-  max-height: 190px;
+  max-height: 280px;
   overflow: auto;
 }
 
@@ -621,17 +623,47 @@ input:disabled {
   cursor: pointer;
 }
 
+.restore-questions-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(47, 127, 114, 0.18);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #1f665c;
+  background: #edf8f5;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.download-questions-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(23, 33, 29, 0.12);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #ffffff;
+  background: #17211d;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 @media (max-width: 560px) {
   .app {
     padding: 14px;
   }
 
   .quiz-shell {
-    padding: 18px;
+    padding: 18px 18px 18px 38px;
   }
 
   .quiz-shell.is-playing {
-    padding: 18px;
+    padding: 18px 18px 18px 38px;
   }
 
   .stats {
