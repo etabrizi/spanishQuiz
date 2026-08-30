@@ -270,6 +270,7 @@ h1 {
 }
 
 .flash-card {
+  position: relative;
   min-height: 220px;
   display: grid;
   place-items: center;
@@ -284,6 +285,26 @@ h1 {
   background-size: cover;
   background-position: center;
   text-align: center;
+}
+
+.speak-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: #17211d;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+
+.speak-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.28);
 }
 
 .flash-card span {

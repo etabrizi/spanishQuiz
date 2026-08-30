@@ -13,6 +13,7 @@ import {
   Trash2,
   Trophy,
   User,
+  Volume2,
   X,
   XCircle
 } from 'lucide-react';
@@ -235,6 +236,69 @@ function getModeCards(sourceCards, quizMode) {
   return quizMode === QUIZ_MODE.STREAK ? shuffleCards(sourceCards) : getRoundCards(sourceCards);
 }
 
+function canSpeak() {
+  return typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+}
+
+function getSpanishVoice() {
+  if (!canSpeak()) {
+    return null;
+  }
+
+  const voices = window.speechSynthesis.getVoices();
+  const spanishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith('es'));
+
+  return spanishVoices
+    .map((voice) => {
+      const name = voice.name.toLowerCase();
+      const language = voice.lang.toLowerCase();
+      let score = 0;
+
+      if (language === 'es-es') {
+        score += 8;
+      } else if (language === 'es-mx' || language === 'es-us') {
+        score += 6;
+      } else {
+        score += 3;
+      }
+
+      if (voice.localService) {
+        score += 4;
+      }
+
+      if (name.includes('premium') || name.includes('enhanced') || name.includes('natural')) {
+        score += 5;
+      }
+
+      if (['monica', 'paulina', 'marisol', 'luciana', 'elvira', 'jorge'].some((voiceName) => name.includes(voiceName))) {
+        score += 3;
+      }
+
+      if (name.includes('google')) {
+        score += 2;
+      }
+
+      return { voice, score };
+    })
+    .sort((first, second) => second.score - first.score)[0]?.voice ?? null;
+}
+
+function speakSpanish(text) {
+  if (!canSpeak()) {
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(text);
+  const spanishVoice = getSpanishVoice();
+
+  utterance.lang = 'es-ES';
+  utterance.voice = spanishVoice;
+  utterance.rate = 0.9;
+  utterance.pitch = 1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
 function App() {
   const [view, setView] = useState(VIEW.HOME);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
@@ -257,6 +321,7 @@ function App() {
   const [correctCount, setCorrectCount] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(ROUND_SECONDS);
   const [feedback, setFeedback] = useState(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const [roundResults, setRoundResults] = useState([]);
   const [lastRoundSummary, setLastRoundSummary] = useState(null);
   const [deckMessage, setDeckMessage] = useState('Loading questions...');
@@ -310,6 +375,29 @@ function App() {
       playerNameInputRef.current?.focus();
     }
   }, [view]);
+
+  useEffect(() => {
+    if (!canSpeak()) {
+      setSpeechSupported(false);
+      return undefined;
+    }
+
+    const loadVoices = () => {
+      window.speechSynthesis.getVoices();
+      setSpeechSupported(true);
+    };
+
+    loadVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
+  useEffect(() => {
+    if (view === VIEW.QUIZ && currentCard && speechSupported) {
+      speakSpanish(getCardQuestion(currentCard));
+    }
+  }, [cardIndex, currentCard, speechSupported, view]);
 
   useEffect(() => {
     if (feedback?.type === 'wrong' || feedback?.type === 'missed') {
@@ -805,6 +893,17 @@ function App() {
             )}
 
             <article className="flash-card">
+              {speechSupported && (
+                <button
+                  className="speak-button"
+                  type="button"
+                  onClick={() => speakSpanish(getCardQuestion(currentCard))}
+                  aria-label="Speak Spanish word"
+                  title="Speak Spanish word"
+                >
+                  <Volume2 size={20} />
+                </button>
+              )}
               <span>Question</span>
               <p>{getCardQuestion(currentCard)}</p>
             </article>
