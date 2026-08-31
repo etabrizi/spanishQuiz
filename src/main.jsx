@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Download,
   Flame,
+  Languages,
   ListPlus,
   RotateCcw,
   Play,
@@ -37,15 +38,79 @@ const VIEW = {
 };
 const QUIZ_MODE = {
   NORMAL: 'normal',
-  STREAK: 'streak'
+  STREAK: 'streak',
+  TRANSLATE: 'translate'
 };
 const QUIZ_MODE_LABEL = {
   [QUIZ_MODE.NORMAL]: 'Normal',
-  [QUIZ_MODE.STREAK]: 'Streak'
+  [QUIZ_MODE.STREAK]: 'Streak',
+  [QUIZ_MODE.TRANSLATE]: 'Translate'
+};
+const STREAK_MODES = [QUIZ_MODE.STREAK, QUIZ_MODE.TRANSLATE];
+const NOUN_PHRASES = {
+  casa: { definite: 'la casa', indefinite: 'una casa', englishDefinite: 'the house', englishIndefinite: 'a house' },
+  agua: { definite: 'el agua', indefinite: 'agua', englishDefinite: 'the water', englishIndefinite: 'water' },
+  comida: { definite: 'la comida', indefinite: 'comida', englishDefinite: 'the food', englishIndefinite: 'food' },
+  amigo: { definite: 'el amigo', indefinite: 'un amigo', englishDefinite: 'the friend', englishIndefinite: 'a friend' },
+  trabajo: { definite: 'el trabajo', indefinite: 'un trabajo', englishDefinite: 'the work', englishIndefinite: 'work' },
+  familia: { definite: 'la familia', indefinite: 'una familia', englishDefinite: 'the family', englishIndefinite: 'a family' },
+  problema: { definite: 'el problema', indefinite: 'un problema', englishDefinite: 'the problem', englishIndefinite: 'a problem' },
+  telefono: { definite: 'el teléfono', indefinite: 'un teléfono', englishDefinite: 'the phone', englishIndefinite: 'a phone' },
+  restaurante: {
+    definite: 'el restaurante',
+    indefinite: 'un restaurante',
+    englishDefinite: 'the restaurant',
+    englishIndefinite: 'a restaurant'
+  },
+  musica: { definite: 'la música', indefinite: 'música', englishDefinite: 'the music', englishIndefinite: 'music' },
+  tiempo: { definite: 'el tiempo', indefinite: 'tiempo', englishDefinite: 'the time', englishIndefinite: 'time' },
+  dinero: { definite: 'el dinero', indefinite: 'dinero', englishDefinite: 'the money', englishIndefinite: 'money' },
+  coche: { definite: 'el coche', indefinite: 'un coche', englishDefinite: 'the car', englishIndefinite: 'a car' },
+  calle: { definite: 'la calle', indefinite: 'una calle', englishDefinite: 'the street', englishIndefinite: 'a street' },
+  tienda: { definite: 'la tienda', indefinite: 'una tienda', englishDefinite: 'the shop', englishIndefinite: 'a shop' },
+  puerta: { definite: 'la puerta', indefinite: 'una puerta', englishDefinite: 'the door', englishIndefinite: 'a door' },
+  ventana: { definite: 'la ventana', indefinite: 'una ventana', englishDefinite: 'the window', englishIndefinite: 'a window' },
+  mesa: { definite: 'la mesa', indefinite: 'una mesa', englishDefinite: 'the table', englishIndefinite: 'a table' },
+  silla: { definite: 'la silla', indefinite: 'una silla', englishDefinite: 'the chair', englishIndefinite: 'a chair' },
+  ropa: { definite: 'la ropa', indefinite: 'ropa', englishDefinite: 'the clothes', englishIndefinite: 'clothes' },
+  zapatos: { definite: 'los zapatos', indefinite: 'zapatos', englishDefinite: 'the shoes', englishIndefinite: 'shoes' },
+  mano: { definite: 'la mano', indefinite: 'una mano', englishDefinite: 'the hand', englishIndefinite: 'a hand' },
+  cabeza: { definite: 'la cabeza', indefinite: 'una cabeza', englishDefinite: 'the head', englishIndefinite: 'a head' },
+  ojo: { definite: 'el ojo', indefinite: 'un ojo', englishDefinite: 'the eye', englishIndefinite: 'an eye' },
+  dia: { definite: 'el día', indefinite: 'un día', englishDefinite: 'the day', englishIndefinite: 'a day' },
+  noche: { definite: 'la noche', indefinite: 'una noche', englishDefinite: 'the night', englishIndefinite: 'a night' },
+  semana: { definite: 'la semana', indefinite: 'una semana', englishDefinite: 'the week', englishIndefinite: 'a week' },
+  ano: { definite: 'el año', indefinite: 'un año', englishDefinite: 'the year', englishIndefinite: 'a year' },
+  verdad: { definite: 'la verdad', indefinite: 'la verdad', englishDefinite: 'the truth', englishIndefinite: 'the truth' },
+  cosa: { definite: 'la cosa', indefinite: 'una cosa', englishDefinite: 'the thing', englishIndefinite: 'a thing' }
+};
+const VERB_FORMS = {
+  ayudar: { yo: 'ayudo', tu: 'ayudas', english: 'help' },
+  beber: { yo: 'bebo', tu: 'bebes', english: 'drink' },
+  comer: { yo: 'como', tu: 'comes', english: 'eat' },
+  entender: { yo: 'entiendo', tu: 'entiendes', english: 'understand' },
+  gustar: { yo: 'me gusta', tu: 'te gusta', english: 'like' },
+  hacer: { yo: 'hago', tu: 'haces', english: 'do' },
+  hablar: { yo: 'hablo', tu: 'hablas', english: 'speak' },
+  ir: { yo: 'voy', tu: 'vas', english: 'go' },
+  necesitar: { yo: 'necesito', tu: 'necesitas', english: 'need' },
+  pagar: { yo: 'pago', tu: 'pagas', english: 'pay' },
+  poder: { yo: 'puedo', tu: 'puedes', english: 'can' },
+  querer: { yo: 'quiero', tu: 'quieres', english: 'want' },
+  saber: { yo: 'sé', tu: 'sabes', english: 'know' },
+  tener: { yo: 'tengo', tu: 'tienes', english: 'have' },
+  venir: { yo: 'vengo', tu: 'vienes', english: 'come' },
+  ver: { yo: 'veo', tu: 'ves', english: 'see' }
 };
 
 function normalizeAnswer(value) {
   return value.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function normalizePhraseKey(value) {
+  return normalizeAnswer(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 }
 
 function getEditDistance(firstValue, secondValue) {
@@ -228,12 +293,250 @@ function shuffleCards(cards) {
   return [...cards].sort(() => Math.random() - 0.5);
 }
 
+function getRandomAnswer(card) {
+  const answers = getCardAnswers(card);
+
+  return answers[Math.floor(Math.random() * answers.length)];
+}
+
+function getPrimaryAnswer(card) {
+  return getCardAnswers(card)[0];
+}
+
+function getCardByQuestion(cards, question) {
+  const normalizedQuestion = normalizeAnswer(question);
+
+  return cards.find((card) => normalizeAnswer(getCardQuestion(card)) === normalizedQuestion);
+}
+
+function getCardsByAnswerPrefix(cards, prefix) {
+  const normalizedPrefix = normalizeAnswer(prefix);
+
+  return cards.filter((card) => getPrimaryAnswer(card).toLowerCase().startsWith(normalizedPrefix));
+}
+
+function getCardsByAnswers(cards, answers) {
+  const normalizedAnswers = answers.map(normalizeAnswer);
+
+  return cards.filter((card) =>
+    getCardAnswers(card).some((answer) => normalizedAnswers.includes(normalizeAnswer(answer)))
+  );
+}
+
+function stripQuestionPunctuation(value) {
+  return value.replace(/[¿?…]/g, '').trim();
+}
+
+function capitalizeSentence(value) {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function getTranslateSentenceBank(sourceCards) {
+  const nouns = sourceCards
+    .map((card) => ({ card, phrase: NOUN_PHRASES[normalizePhraseKey(getCardQuestion(card))] }))
+    .filter((entry) => entry.phrase);
+  const places = nouns.filter((entry) =>
+    ['casa', 'restaurante', 'calle', 'tienda', 'trabajo'].includes(normalizePhraseKey(getCardQuestion(entry.card)))
+  );
+  const periods = nouns.filter((entry) =>
+    ['dia', 'noche', 'semana', 'ano'].includes(normalizePhraseKey(getCardQuestion(entry.card)))
+  );
+  const timeWords = getCardsByAnswers(sourceCards, ['today', 'tomorrow', 'now', 'after', 'always']).map((card) => ({
+    card,
+    spanish: getCardQuestion(card),
+    english: normalizePhraseKey(getCardQuestion(card)) === 'despues' ? 'later' : getPrimaryAnswer(card)
+  }));
+  const infinitives = getCardsByAnswerPrefix(sourceCards, 'to ');
+  const actionInfinitives = infinitives.filter(
+    (verb) => !['ser', 'estar', 'tener', 'querer', 'poder', 'saber', 'gustar'].includes(normalizePhraseKey(getCardQuestion(verb)))
+  );
+  const sentences = [];
+
+  const addSentence = (spanish, english) => {
+    if (!spanish || !english) {
+      return;
+    }
+
+    const sentence = {
+      question: spanish,
+      answers: [capitalizeSentence(english)],
+      options: []
+    };
+
+    if (!sentences.some((existingSentence) => normalizeAnswer(existingSentence.question) === normalizeAnswer(sentence.question))) {
+      sentences.push(sentence);
+    }
+  };
+
+  const tengo = getCardByQuestion(sourceCards, 'tengo');
+  const quiero = getCardByQuestion(sourceCards, 'quiero');
+  const necesito = getCardByQuestion(sourceCards, 'necesito');
+  const puedo = getCardByQuestion(sourceCards, 'puedo');
+  const ir = getCardByQuestion(sourceCards, 'ir');
+  const vasA = getCardByQuestion(sourceCards, '¿Vas a…?');
+  const puedes = getCardByQuestion(sourceCards, '¿Puedes…?');
+  const queHaces = getCardByQuestion(sourceCards, '¿Qué haces?');
+  const queQuieres = getCardByQuestion(sourceCards, '¿Qué quieres?');
+  const para = getCardByQuestion(sourceCards, 'para');
+  const ahora = getCardByQuestion(sourceCards, 'ahora');
+
+  nouns.forEach(({ phrase }) => {
+    if (tengo) {
+      addSentence(`${getCardQuestion(tengo)} ${phrase.indefinite}.`, `I have ${phrase.englishIndefinite}.`);
+    }
+
+    if (quiero) {
+      addSentence(`${getCardQuestion(quiero)} ${phrase.definite}.`, `I want ${phrase.englishDefinite}.`);
+    }
+
+    if (necesito) {
+      addSentence(`${getCardQuestion(necesito)} ${phrase.definite}.`, `I need ${phrase.englishDefinite}.`);
+    }
+  });
+
+  places.forEach(({ phrase }) => {
+    if (ir) {
+      addSentence(`Voy a ${phrase.definite}.`, `I am going to ${phrase.englishDefinite}.`);
+    }
+
+    if (quiero) {
+      addSentence(`${getCardQuestion(quiero)} ir a ${phrase.definite}.`, `I want to go to ${phrase.englishDefinite}.`);
+    }
+
+    if (necesito) {
+      addSentence(`${getCardQuestion(necesito)} ir a ${phrase.definite}.`, `I need to go to ${phrase.englishDefinite}.`);
+    }
+  });
+
+  actionInfinitives.forEach((verb) => {
+    const spanishVerb = getCardQuestion(verb);
+    const englishVerb = getPrimaryAnswer(verb).replace(/^to /i, '');
+    const verbForm = VERB_FORMS[normalizePhraseKey(spanishVerb)];
+
+    if (quiero) {
+      addSentence(`${getCardQuestion(quiero)} ${spanishVerb}.`, `I want to ${englishVerb}.`);
+    }
+
+    if (necesito) {
+      addSentence(`${getCardQuestion(necesito)} ${spanishVerb}.`, `I need to ${englishVerb}.`);
+    }
+
+    if (puedo) {
+      addSentence(`${getCardQuestion(puedo)} ${spanishVerb}.`, `I can ${englishVerb}.`);
+    }
+
+    if (puedes) {
+      addSentence(`${stripQuestionPunctuation(getCardQuestion(puedes))} ${spanishVerb}?`, `Can you ${englishVerb}?`);
+    }
+
+    if (vasA) {
+      addSentence(`${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb}?`, `Are you going to ${englishVerb}?`);
+    }
+
+    if (ir && ahora) {
+      addSentence(`Voy a ${spanishVerb} ${getCardQuestion(ahora)}.`, `I will ${englishVerb} now.`);
+    }
+
+    if (verbForm) {
+      addSentence(`${verbForm.yo} ${getCardQuestion(ahora) ?? ''}.`.replace(/\s+\./, '.'), `I ${verbForm.english}${ahora ? ' now' : ''}.`);
+    }
+
+    timeWords.forEach((timeWord) => {
+      if (ir) {
+        addSentence(`Voy a ${spanishVerb} ${timeWord.spanish}.`, `I will ${englishVerb} ${timeWord.english}.`);
+      }
+
+      if (vasA) {
+        addSentence(`${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb} ${timeWord.spanish}?`, `Will you ${englishVerb} ${timeWord.english}?`);
+      }
+    });
+  });
+
+  periods.forEach(({ phrase }) => {
+    actionInfinitives.forEach((verb) => {
+      if (tengo && para) {
+        addSentence(
+          `${getCardQuestion(tengo)} ${phrase.indefinite} ${getCardQuestion(para)} ${getCardQuestion(verb)}.`,
+          `I have ${phrase.englishIndefinite} to ${getPrimaryAnswer(verb).replace(/^to /i, '')}.`
+        );
+      }
+    });
+  });
+
+  actionInfinitives.forEach((verb) => {
+    const spanishVerb = getCardQuestion(verb);
+    const englishVerb = getPrimaryAnswer(verb).replace(/^to /i, '');
+    const tenerForm = VERB_FORMS.tener;
+
+    if (tenerForm) {
+      addSentence(`Tengo que ${spanishVerb}.`, `I have to ${englishVerb}.`);
+      addSentence(`Tienes que ${spanishVerb}.`, `You have to ${englishVerb}.`);
+    }
+
+    if (tenerForm && timeWords.length) {
+      timeWords.forEach((timeWord) => {
+        addSentence(`Tienes que ${spanishVerb} ${timeWord.spanish}.`, `You have to ${englishVerb} ${timeWord.english}.`);
+      });
+    }
+  });
+
+  timeWords.forEach((timeWord) => {
+    if (queHaces) {
+      addSentence(`${getCardQuestion(queHaces)} ${timeWord.spanish}?`, `What are you doing ${timeWord.english}?`);
+    }
+
+    if (queQuieres) {
+      addSentence(`${getCardQuestion(queQuieres)} ${timeWord.spanish}?`, `What do you want ${timeWord.english}?`);
+    }
+  });
+
+  return sentences;
+}
+
 function getRoundCards(sourceCards) {
   return shuffleCards(sourceCards).slice(0, Math.min(ROUND_CARD_COUNT, sourceCards.length));
 }
 
+function getTranslatePromptCards(sourceCards) {
+  const sentenceBank = getTranslateSentenceBank(sourceCards);
+
+  if (sentenceBank.length < 3) {
+    return [];
+  }
+
+  return shuffleCards(sentenceBank).map((sentence) => {
+    const correctAnswer = getCardAnswer(sentence);
+    const wrongAnswers = [];
+
+    shuffleCards(sentenceBank).forEach((candidateSentence) => {
+      const candidateAnswer = getCardAnswer(candidateSentence);
+
+      if (
+        wrongAnswers.length < 2 &&
+        normalizeAnswer(candidateAnswer) !== normalizeAnswer(correctAnswer) &&
+        !wrongAnswers.some((wrongAnswer) => normalizeAnswer(wrongAnswer) === normalizeAnswer(candidateAnswer))
+      ) {
+        wrongAnswers.push(candidateAnswer);
+      }
+    });
+
+    return {
+      ...sentence,
+      options: shuffleCards([correctAnswer, ...wrongAnswers])
+    };
+  });
+}
+
 function getModeCards(sourceCards, quizMode) {
+  if (quizMode === QUIZ_MODE.TRANSLATE) {
+    return getTranslatePromptCards(sourceCards);
+  }
+
   return quizMode === QUIZ_MODE.STREAK ? shuffleCards(sourceCards) : getRoundCards(sourceCards);
+}
+
+function isStreakMode(quizMode) {
+  return STREAK_MODES.includes(quizMode);
 }
 
 function canSpeak() {
@@ -347,6 +650,8 @@ function App() {
     () => leaderboard.filter((entry) => (entry.mode ?? QUIZ_MODE.NORMAL) === QUIZ_MODE.NORMAL),
     [leaderboard]
   );
+  const translateSentenceCount = useMemo(() => getTranslateSentenceBank(sourceCards).length, [sourceCards]);
+  const canStartQuiz = quizMode === QUIZ_MODE.TRANSLATE ? translateSentenceCount >= 3 : sourceCards.length > 0;
 
   useLayoutEffect(() => {
     if (!shellRef.current) {
@@ -448,7 +753,7 @@ function App() {
   }
 
   function getRoundScore() {
-    return quizModeRef.current === QUIZ_MODE.STREAK ? bestStreakRef.current : score;
+    return isStreakMode(quizModeRef.current) ? bestStreakRef.current : score;
   }
 
   function recordBestStreaker(nextStreak, nextCorrectCount) {
@@ -474,7 +779,7 @@ function App() {
       mode: quizModeRef.current,
       score: finalScore,
       correct: finalCorrectCount,
-      total: quizModeRef.current === QUIZ_MODE.STREAK ? finalResults.length : cards.length,
+      total: isStreakMode(quizModeRef.current) ? finalResults.length : cards.length,
       date: new Date().toLocaleDateString()
     };
     const nextLeaderboard = [nextEntry, ...leaderboard]
@@ -489,7 +794,7 @@ function App() {
       score: finalScore,
       bestStreak: bestStreakRef.current,
       correct: finalCorrectCount,
-      total: quizModeRef.current === QUIZ_MODE.STREAK ? finalResults.length : cards.length,
+      total: isStreakMode(quizModeRef.current) ? finalResults.length : cards.length,
       results: finalResults
     });
     resetRound(sourceCards);
@@ -578,7 +883,7 @@ function App() {
             results: nextResults
           });
 
-          if (quizModeRef.current === QUIZ_MODE.STREAK) {
+          if (isStreakMode(quizModeRef.current)) {
             window.setTimeout(() => finishRound(bestStreakRef.current, finalCorrectCount, nextResults), 850);
           }
 
@@ -597,7 +902,7 @@ function App() {
 
     const nextName = nameDraft.trim();
 
-    if (!nextName || !sourceCards.length) {
+    if (!nextName || !canStartQuiz) {
       return;
     }
 
@@ -613,11 +918,14 @@ function App() {
   ) {
     const isLastCard = cardIndex === cards.length - 1;
 
-    if (quizModeRef.current === QUIZ_MODE.STREAK && isLastCard) {
-      setCards((currentCards) => [...currentCards, ...shuffleCards(sourceCards)]);
+    if (isStreakMode(quizModeRef.current) && isLastCard) {
+      setCards((currentCards) => [
+        ...currentCards,
+        ...getModeCards(sourceCards, quizModeRef.current)
+      ]);
     }
 
-    if (quizModeRef.current !== QUIZ_MODE.STREAK && isLastCard) {
+    if (!isStreakMode(quizModeRef.current) && isLastCard) {
       finishRound(finalScore, finalCorrectCount, finalResults);
       return;
     }
@@ -628,27 +936,30 @@ function App() {
     setCardIndex((current) => current + 1);
   }
 
-  function checkAnswer(event) {
-    event.preventDefault();
-
-    if (!answer.trim() || feedback) {
+  function submitAnswer(userAnswer) {
+    if (!userAnswer.trim() || feedback) {
       return;
     }
 
     const correctAnswers = getCardAnswers(currentCard);
-    const answerMatch = checkAnswerMatch(answer, correctAnswers);
+    const answerMatch =
+      quizMode === QUIZ_MODE.TRANSLATE
+        ? correctAnswers.map(normalizeAnswer).includes(normalizeAnswer(userAnswer))
+          ? 'exact'
+          : 'wrong'
+        : checkAnswerMatch(userAnswer, correctAnswers);
 
     if (answerMatch !== 'wrong') {
       const questionPoints = getQuestionPoints(answerMatch, secondsLeft);
       const nextScore = score + questionPoints;
       const nextStreak = currentStreak + 1;
       const nextBestStreak = Math.max(bestStreak, nextStreak);
-      const nextRoundScore = quizMode === QUIZ_MODE.STREAK ? nextBestStreak : nextScore;
+      const nextRoundScore = isStreakMode(quizMode) ? nextBestStreak : nextScore;
       const nextCorrectCount = correctCount + 1;
       const nextResults = addRoundResult({
         question: getCardQuestion(currentCard),
         acceptedAnswers: correctAnswers,
-        userAnswer: answer.trim(),
+        userAnswer: userAnswer.trim(),
         status: answerMatch,
         points: questionPoints,
         streak: nextStreak
@@ -664,7 +975,7 @@ function App() {
       setFeedback({
         type: answerMatch === 'exact' ? 'correct' : 'close',
         text:
-          quizMode === QUIZ_MODE.STREAK
+          isStreakMode(quizMode)
             ? `${answerMatch === 'exact' ? 'Correct' : 'Close enough'}. Streak: ${nextStreak}.`
             : answerMatch === 'exact'
               ? `Correct. ${questionPoints} points added.`
@@ -679,7 +990,7 @@ function App() {
     const nextResults = addRoundResult({
       question: getCardQuestion(currentCard),
       acceptedAnswers: correctAnswers,
-      userAnswer: answer.trim(),
+      userAnswer: userAnswer.trim(),
       status: 'wrong',
       points: 0,
       streak: 0
@@ -691,9 +1002,18 @@ function App() {
       results: nextResults
     });
 
-    if (quizMode === QUIZ_MODE.STREAK) {
+    if (isStreakMode(quizMode)) {
       window.setTimeout(() => finishRound(bestStreakRef.current, correctCount, nextResults), 850);
     }
+  }
+
+  function checkAnswer(event) {
+    event.preventDefault();
+    submitAnswer(answer);
+  }
+
+  function chooseTranslateOption(option) {
+    submitAnswer(option);
   }
 
   function restartGame() {
@@ -830,6 +1150,15 @@ function App() {
             >
               <Flame size={18} />
             </button>
+            <button
+              className={quizMode === QUIZ_MODE.TRANSLATE ? 'active' : ''}
+              type="button"
+              onClick={() => setQuizMode(QUIZ_MODE.TRANSLATE)}
+              aria-label="Translate mode"
+              title="Translate mode"
+            >
+              <Languages size={18} />
+            </button>
           </div>
         )}
 
@@ -846,30 +1175,33 @@ function App() {
                   onChange={(event) => setNameDraft(event.target.value)}
                   autoComplete="name"
                 />
-                <button type="submit" disabled={!sourceCards.length}>
+                <button type="submit" disabled={!canStartQuiz}>
                   <Play size={18} />
                   Start
                 </button>
               </div>
+              {quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
+                <p className="mode-note">Add more nouns, verbs, or time words in Manage to unlock Translate mode.</p>
+              )}
             </form>
           </section>
         )}
 
         {view === VIEW.QUIZ && (
           <>
-            <div className={`stats ${quizMode === QUIZ_MODE.STREAK ? 'is-streak' : ''}`} aria-label="Game stats">
+            <div className={`stats ${isStreakMode(quizMode) ? 'is-streak' : ''}`} aria-label="Game stats">
               <div>
                 <span>Player</span>
                 <strong>{playerName || 'Guest'}</strong>
               </div>
               <div>
-                <span>{quizMode === QUIZ_MODE.STREAK ? 'Streak' : 'Score'}</span>
+                <span>{isStreakMode(quizMode) ? 'Streak' : 'Score'}</span>
                 <strong>
-                  {quizMode === QUIZ_MODE.STREAK && <Flame size={18} />}
-                  {quizMode === QUIZ_MODE.STREAK ? currentStreak : score}
+                  {isStreakMode(quizMode) && <Flame size={18} />}
+                  {isStreakMode(quizMode) ? currentStreak : score}
                 </strong>
               </div>
-              {quizMode !== QUIZ_MODE.STREAK && (
+              {!isStreakMode(quizMode) && (
                 <div>
                   <span>Card</span>
                   <strong>
@@ -886,7 +1218,7 @@ function App() {
               </div>
             </div>
 
-            {quizMode !== QUIZ_MODE.STREAK && (
+            {!isStreakMode(quizMode) && (
               <div className="progress-track" aria-hidden="true">
                 <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
@@ -904,29 +1236,44 @@ function App() {
                   <Volume2 size={20} />
                 </button>
               )}
-              <span>Question</span>
+              <span>{quizMode === QUIZ_MODE.TRANSLATE ? 'Translate' : 'Question'}</span>
               <p>{getCardQuestion(currentCard)}</p>
             </article>
 
             <div className="answer-stack">
-              <form className="answer-form" onSubmit={checkAnswer}>
-                <label htmlFor="answer">Answer</label>
-                <div className="answer-row">
-                  <input
-                    ref={inputRef}
-                    id="answer"
-                    type="text"
-                    value={answer}
-                    onChange={(event) => setAnswer(event.target.value)}
-                    placeholder="Type the English word"
-                    autoComplete="off"
-                    disabled={Boolean(feedback)}
-                  />
-                  <button type="submit" disabled={Boolean(feedback)}>
-                    Check
-                  </button>
+              {quizMode === QUIZ_MODE.TRANSLATE ? (
+                <div className="answer-options" aria-label="Translation options">
+                  {currentCard.options.map((option) => (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() => chooseTranslateOption(option)}
+                      disabled={Boolean(feedback)}
+                    >
+                      {option}
+                    </button>
+                  ))}
                 </div>
-              </form>
+              ) : (
+                <form className="answer-form" onSubmit={checkAnswer}>
+                  <label htmlFor="answer">Answer</label>
+                  <div className="answer-row">
+                    <input
+                      ref={inputRef}
+                      id="answer"
+                      type="text"
+                      value={answer}
+                      onChange={(event) => setAnswer(event.target.value)}
+                      placeholder="Type the English word"
+                      autoComplete="off"
+                      disabled={Boolean(feedback)}
+                    />
+                    <button type="submit" disabled={Boolean(feedback)}>
+                      Check
+                    </button>
+                  </div>
+                </form>
+              )}
 
               {feedback && (
                 <div className={`feedback ${feedback.type}`} role="status">
@@ -936,7 +1283,7 @@ function App() {
                     <XCircle size={20} />
                   )}
                   <span>{feedback.text}</span>
-                  {quizMode !== QUIZ_MODE.STREAK && feedback.type !== 'correct' && feedback.type !== 'close' && (
+                  {!isStreakMode(quizMode) && feedback.type !== 'correct' && feedback.type !== 'close' && (
                     <button
                       ref={nextButtonRef}
                       type="button"
@@ -1076,7 +1423,7 @@ function App() {
                 <strong>{lastRoundSummary.name}</strong>
               </div>
               <div>
-                <span>{lastRoundSummary.mode === QUIZ_MODE.STREAK ? 'Best streak' : 'Score'}</span>
+                <span>{isStreakMode(lastRoundSummary.mode) ? 'Streak' : 'Score'}</span>
                 <strong>{lastRoundSummary.score}</strong>
               </div>
             </div>
@@ -1095,7 +1442,7 @@ function App() {
                       You: {result.userAnswer || 'No answer'} · Answer: {result.acceptedAnswers.join(' / ')}
                     </span>
                   </div>
-                  {lastRoundSummary.mode !== QUIZ_MODE.STREAK && <b>{result.points}</b>}
+                  {!isStreakMode(lastRoundSummary.mode) && <b>{result.points}</b>}
                 </div>
               ))}
             </div>
