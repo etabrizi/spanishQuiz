@@ -5,11 +5,11 @@ import {
   CheckCircle2,
   Download,
   Flame,
-  Languages,
   ListPlus,
   RotateCcw,
   Play,
   Plus,
+  Speech,
   Timer,
   Trash2,
   Trophy,
@@ -29,6 +29,7 @@ const CUSTOM_CARDS_STORAGE_KEY = 'spanish-quiz-custom-cards';
 const REMOVED_BASE_CARDS_STORAGE_KEY = 'spanish-quiz-removed-base-cards';
 const LEADERBOARD_STORAGE_KEY = 'spanish-quiz-leaderboard';
 const BEST_STREAKER_STORAGE_KEY = 'spanish-quiz-best-streaker';
+const BEST_TRANSLATOR_STORAGE_KEY = 'spanish-quiz-best-translator';
 const VIEW = {
   HOME: 'home',
   QUIZ: 'quiz',
@@ -242,6 +243,16 @@ function loadBestStreaker() {
   }
 }
 
+function loadBestTranslator() {
+  try {
+    const translator = JSON.parse(window.localStorage.getItem(BEST_TRANSLATOR_STORAGE_KEY) ?? 'null');
+
+    return translator?.name && Number.isFinite(translator.score) ? translator : null;
+  } catch (error) {
+    return null;
+  }
+}
+
 function saveCustomCards(cards) {
   window.localStorage.setItem(CUSTOM_CARDS_STORAGE_KEY, JSON.stringify(cards));
 }
@@ -256,6 +267,10 @@ function saveLeaderboard(scores) {
 
 function saveBestStreaker(streaker) {
   window.localStorage.setItem(BEST_STREAKER_STORAGE_KEY, JSON.stringify(streaker));
+}
+
+function saveBestTranslator(translator) {
+  window.localStorage.setItem(BEST_TRANSLATOR_STORAGE_KEY, JSON.stringify(translator));
 }
 
 function getQuestionPoints(matchType, secondsLeft) {
@@ -630,6 +645,7 @@ function App() {
   const [deckMessage, setDeckMessage] = useState('Loading questions...');
   const [leaderboard, setLeaderboard] = useState(() => loadLeaderboard());
   const [bestStreaker, setBestStreaker] = useState(() => loadBestStreaker());
+  const [bestTranslator, setBestTranslator] = useState(() => loadBestTranslator());
   const shellRef = useRef(null);
   const inputRef = useRef(null);
   const playerNameInputRef = useRef(null);
@@ -757,11 +773,11 @@ function App() {
   }
 
   function recordBestStreaker(nextStreak, nextCorrectCount) {
-    if (quizMode !== QUIZ_MODE.STREAK || nextStreak <= (bestStreaker?.score ?? 0)) {
+    if (!isStreakMode(quizMode)) {
       return;
     }
 
-    const nextBestStreaker = {
+    const nextBestRecord = {
       name: playerName.trim(),
       score: nextStreak,
       correct: nextCorrectCount,
@@ -769,8 +785,15 @@ function App() {
       date: new Date().toLocaleDateString()
     };
 
-    setBestStreaker(nextBestStreaker);
-    saveBestStreaker(nextBestStreaker);
+    if (quizMode === QUIZ_MODE.STREAK && nextStreak > (bestStreaker?.score ?? 0)) {
+      setBestStreaker(nextBestRecord);
+      saveBestStreaker(nextBestRecord);
+    }
+
+    if (quizMode === QUIZ_MODE.TRANSLATE && nextStreak > (bestTranslator?.score ?? 0)) {
+      setBestTranslator(nextBestRecord);
+      saveBestTranslator(nextBestRecord);
+    }
   }
 
   function finishRound(finalScore, finalCorrectCount, finalResults) {
@@ -1026,8 +1049,10 @@ function App() {
   function resetLeaderboard() {
     setLeaderboard([]);
     setBestStreaker(null);
+    setBestTranslator(null);
     window.localStorage.removeItem(LEADERBOARD_STORAGE_KEY);
     window.localStorage.removeItem(BEST_STREAKER_STORAGE_KEY);
+    window.localStorage.removeItem(BEST_TRANSLATOR_STORAGE_KEY);
   }
 
   function addCustomCard(event) {
@@ -1157,7 +1182,7 @@ function App() {
               aria-label="Translate mode"
               title="Translate mode"
             >
-              <Languages size={18} />
+              <Speech size={18} />
             </button>
           </div>
         )}
@@ -1479,6 +1504,22 @@ function App() {
                 <b>
                   <Flame size={20} />
                   {bestStreaker.score}
+                </b>
+              </div>
+            )}
+
+            {bestTranslator && (
+              <div className="best-streaker">
+                <div>
+                  <span>Best translator</span>
+                  <strong>{bestTranslator.name}</strong>
+                  <small>
+                    {bestTranslator.correct}/{bestTranslator.total} correct - {bestTranslator.date}
+                  </small>
+                </div>
+                <b>
+                  <Speech size={20} />
+                  {bestTranslator.score}
                 </b>
               </div>
             )}

@@ -828,8 +828,14 @@ input:disabled {
     right: 16px;
   }
 
+  .top-bar {
+    min-height: 124px;
+    align-items: flex-start;
+    padding-right: 52px;
+  }
+
   .deck-message {
-    margin-bottom: 36px;
+    margin-bottom: 0;
   }
 
   .stats {
