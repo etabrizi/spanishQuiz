@@ -309,6 +309,29 @@ function shuffleCards(cards) {
   return [...cards].sort(() => Math.random() - 0.5);
 }
 
+function mergeCardsByQuestion(cards) {
+  const cardsByQuestion = new Map();
+
+  cards.forEach((card) => {
+    const question = String(getCardQuestion(card) ?? '').trim();
+    const questionKey = normalizeAnswer(question);
+
+    if (!question || !questionKey) {
+      return;
+    }
+
+    const existingCard = cardsByQuestion.get(questionKey);
+    const answers = getCardAnswers(card);
+
+    cardsByQuestion.set(questionKey, {
+      question,
+      answers: existingCard ? [...new Set([...existingCard.answers, ...answers])] : answers
+    });
+  });
+
+  return [...cardsByQuestion.values()];
+}
+
 function getRandomAnswer(card) {
   const answers = getCardAnswers(card);
 
@@ -510,17 +533,13 @@ function getTranslateSentenceBank(sourceCards) {
 }
 
 function getRoundCards(sourceCards) {
-  return shuffleCards(sourceCards).slice(0, Math.min(ROUND_CARD_COUNT, sourceCards.length));
+  const uniqueCards = mergeCardsByQuestion(sourceCards);
+
+  return shuffleCards(uniqueCards).slice(0, Math.min(ROUND_CARD_COUNT, uniqueCards.length));
 }
 
 function getPrimarySourceCards(baseCards, customCards) {
-  const cardsByKey = new Map();
-
-  [...baseCards, ...customCards].forEach((card) => {
-    cardsByKey.set(getCardKey(card), card);
-  });
-
-  return [...cardsByKey.values()];
+  return mergeCardsByQuestion([...baseCards, ...customCards]);
 }
 
 function getTranslatePromptCards(sourceCards) {
@@ -558,7 +577,7 @@ function getModeCards(sourceCards, quizMode) {
     return getTranslatePromptCards(sourceCards);
   }
 
-  return quizMode === QUIZ_MODE.STREAK ? shuffleCards(sourceCards) : getRoundCards(sourceCards);
+  return quizMode === QUIZ_MODE.STREAK ? shuffleCards(mergeCardsByQuestion(sourceCards)) : getRoundCards(sourceCards);
 }
 
 function isStreakMode(quizMode) {
@@ -721,9 +740,17 @@ function App() {
     };
 
     loadVoices();
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    if (typeof window.speechSynthesis.addEventListener === 'function') {
+      window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
 
-    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+      return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+    }
+
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -961,14 +988,7 @@ function App() {
   ) {
     const isLastCard = cardIndex === cards.length - 1;
 
-    if (isStreakMode(quizModeRef.current) && isLastCard) {
-      setCards((currentCards) => [
-        ...currentCards,
-        ...getModeCards(sourceCards, quizModeRef.current)
-      ]);
-    }
-
-    if (!isStreakMode(quizModeRef.current) && isLastCard) {
+    if (isLastCard) {
       finishRound(finalScore, finalCorrectCount, finalResults);
       return;
     }
