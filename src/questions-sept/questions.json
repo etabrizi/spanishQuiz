@@ -1,0 +1,546 @@
+[
+  {
+    "question": "toda",
+    "answers": ["all"]
+  },
+  {
+    "question": "quizás",
+    "answers": ["maybe"]
+  },
+  {
+    "question": "cerca",
+    "answers": ["near"]
+  },
+  {
+    "question": "juntos",
+    "answers": ["together"]
+  },
+  {
+    "question": "pronto",
+    "answers": ["soon"]
+  },
+  {
+    "question": "arriba",
+    "answers": ["above", "upstairs"]
+  },
+  {
+    "question": "abajo",
+    "answers": ["below"]
+  },
+  {
+    "question": "tarde",
+    "answers": ["afternoon", "late"]
+  },
+  {
+    "question": "tampoco",
+    "answers": ["neither"]
+  },
+  {
+    "question": "mismo",
+    "answers": ["same"]
+  },
+  {
+    "question": "fuera",
+    "answers": ["out", "outside"]
+  },
+  {
+    "question": "otra",
+    "answers": ["other"]
+  },
+  {
+    "question": "otra vez",
+    "answers": ["again"]
+  },
+  {
+    "question": "decir",
+    "answers": ["to say", "tell"]
+  },
+  {
+    "question": "dar",
+    "answers": ["to give"]
+  },
+  {
+    "question": "pagar",
+    "answers": ["to pay"]
+  },
+  {
+    "question": "cansado",
+    "answers": ["tired"]
+  },
+  {
+    "question": "listo",
+    "answers": ["ready"]
+  },
+  {
+    "question": "a veces",
+    "answers": ["sometimes"]
+  },
+  {
+    "question": "solo",
+    "answers": ["only", "alone"]
+  },
+  {
+    "question": "contra",
+    "answers": ["against"]
+  },
+  {
+    "question": "vivir",
+    "answers": ["to live"]
+  },
+  {
+    "question": "parar",
+    "answers": ["to stop"]
+  },
+  {
+    "question": "mojado",
+    "answers": ["wet"]
+  },
+  {
+    "question": "pensando",
+    "answers": ["thinking"]
+  },
+  {
+    "question": "triste",
+    "answers": ["sad"]
+  },
+  {
+    "question": "soy",
+    "answers": ["I am"]
+  },
+  {
+    "question": "lleno",
+    "answers": ["full"]
+  },
+  {
+    "question": "escuchar",
+    "answers": ["to listen", "listen"]
+  },
+  {
+    "question": "esperar",
+    "answers": ["wait", "to wait", "to hope"]
+  },
+  {
+    "question": "lejos",
+    "answers": ["far"]
+  },
+  {
+    "question": "volver",
+    "answers": ["return", "to return"]
+  },
+  {
+    "question": "cerrada",
+    "answers": ["closed"]
+  },
+  {
+    "question": "estuve",
+    "answers": ["I was"]
+  },
+  {
+    "question": "tendré",
+    "answers": ["I will have"]
+  },
+  {
+    "question": "llegar",
+    "answers": ["arrive", "to arrive"]
+  },
+  {
+    "question": "próximo",
+    "answers": ["coming", "next"]
+  },
+  {
+    "question": "ahora",
+    "answers": ["now"]
+  },
+  {
+    "question": "después",
+    "answers": ["after", "later"]
+  },
+  {
+    "question": "antes",
+    "answers": ["before"]
+  },
+  {
+    "question": "siempre",
+    "answers": ["always"]
+  },
+  {
+    "question": "nunca",
+    "answers": ["never"]
+  },
+  {
+    "question": "también",
+    "answers": ["also", "too"]
+  },
+  {
+    "question": "aquí",
+    "answers": ["here"]
+  },
+  {
+    "question": "allí",
+    "answers": ["there"]
+  },
+  {
+    "question": "dentro",
+    "answers": ["inside"]
+  },
+  {
+    "question": "mucho",
+    "answers": ["a lot", "much"]
+  },
+  {
+    "question": "poco",
+    "answers": ["little", "a little"]
+  },
+  {
+    "question": "más",
+    "answers": ["more"]
+  },
+  {
+    "question": "menos",
+    "answers": ["less"]
+  },
+  {
+    "question": "todo",
+    "answers": ["everything", "all"]
+  },
+  {
+    "question": "nada",
+    "answers": ["nothing"]
+  },
+  {
+    "question": "algo",
+    "answers": ["something"]
+  },
+  {
+    "question": "alguien",
+    "answers": ["someone"]
+  },
+  {
+    "question": "nadie",
+    "answers": ["nobody", "no one"]
+  },
+  {
+    "question": "otro",
+    "answers": ["other", "another"]
+  },
+  {
+    "question": "bueno",
+    "answers": ["good"]
+  },
+  {
+    "question": "malo",
+    "answers": ["bad"]
+  },
+  {
+    "question": "grande",
+    "answers": ["big", "large"]
+  },
+  {
+    "question": "pequeño",
+    "answers": ["small"]
+  },
+  {
+    "question": "nuevo",
+    "answers": ["new"]
+  },
+  {
+    "question": "viejo",
+    "answers": ["old"]
+  },
+  {
+    "question": "fácil",
+    "answers": ["easy"]
+  },
+  {
+    "question": "difícil",
+    "answers": ["difficult", "hard"]
+  },
+  {
+    "question": "rápido",
+    "answers": ["fast", "quick"]
+  },
+  {
+    "question": "lento",
+    "answers": ["slow"]
+  },
+  {
+    "question": "feliz",
+    "answers": ["happy"]
+  },
+  {
+    "question": "enojado",
+    "answers": ["angry"]
+  },
+  {
+    "question": "caliente",
+    "answers": ["hot"]
+  },
+  {
+    "question": "frío",
+    "answers": ["cold"]
+  },
+  {
+    "question": "seco",
+    "answers": ["dry"]
+  },
+  {
+    "question": "limpio",
+    "answers": ["clean"]
+  },
+  {
+    "question": "sucio",
+    "answers": ["dirty"]
+  },
+  {
+    "question": "abierto",
+    "answers": ["open"]
+  },
+  {
+    "question": "casa",
+    "answers": ["house", "home"]
+  },
+  {
+    "question": "agua",
+    "answers": ["water"]
+  },
+  {
+    "question": "comida",
+    "answers": ["food"]
+  },
+  {
+    "question": "día",
+    "answers": ["day"]
+  },
+  {
+    "question": "noche",
+    "answers": ["night"]
+  },
+  {
+    "question": "mañana",
+    "answers": ["morning", "tomorrow"]
+  },
+  {
+    "question": "hoy",
+    "answers": ["today"]
+  },
+  {
+    "question": "ayer",
+    "answers": ["yesterday"]
+  },
+  {
+    "question": "tiempo",
+    "answers": ["time", "weather"]
+  },
+  {
+    "question": "lluvia",
+    "answers": ["rain"]
+  },
+  {
+    "question": "sol",
+    "answers": ["sun"]
+  },
+  {
+    "question": "trabajo",
+    "answers": ["work", "job"]
+  },
+  {
+    "question": "amigo",
+    "answers": ["friend"]
+  },
+  {
+    "question": "familia",
+    "answers": ["family"]
+  },
+  {
+    "question": "hombre",
+    "answers": ["man"]
+  },
+  {
+    "question": "mujer",
+    "answers": ["woman"]
+  },
+  {
+    "question": "niño",
+    "answers": ["boy", "child"]
+  },
+  {
+    "question": "niña",
+    "answers": ["girl"]
+  },
+  {
+    "question": "ir",
+    "answers": ["to go"]
+  },
+  {
+    "question": "venir",
+    "answers": ["to come"]
+  },
+  {
+    "question": "hacer",
+    "answers": ["to do", "to make"]
+  },
+  {
+    "question": "tener",
+    "answers": ["to have"]
+  },
+  {
+    "question": "querer",
+    "answers": ["to want", "to love"]
+  },
+  {
+    "question": "poder",
+    "answers": ["to be able to", "can"]
+  },
+  {
+    "question": "necesitar",
+    "answers": ["to need"]
+  },
+  {
+    "question": "saber",
+    "answers": ["to know"]
+  },
+  {
+    "question": "ver",
+    "answers": ["to see"]
+  },
+  {
+    "question": "mirar",
+    "answers": ["to look", "to watch"]
+  },
+  {
+    "question": "hablar",
+    "answers": ["to speak", "to talk"]
+  },
+  {
+    "question": "comer",
+    "answers": ["to eat"]
+  },
+  {
+    "question": "beber",
+    "answers": ["to drink"]
+  },
+  {
+    "question": "dormir",
+    "answers": ["to sleep"]
+  },
+  {
+    "question": "caminar",
+    "answers": ["to walk"]
+  },
+  {
+    "question": "correr",
+    "answers": ["to run"]
+  },
+  {
+    "question": "trabajar",
+    "answers": ["to work"]
+  },
+  {
+    "question": "comprar",
+    "answers": ["to buy"]
+  },
+  {
+    "question": "encontrar",
+    "answers": ["to find"]
+  },
+  {
+    "question": "buscar",
+    "answers": ["to look for", "to search"]
+  },
+  {
+    "question": "abrir",
+    "answers": ["to open"]
+  },
+  {
+    "question": "cerrar",
+    "answers": ["to close"]
+  },
+  {
+    "question": "empezar",
+    "answers": ["to start", "to begin"]
+  },
+  {
+    "question": "terminar",
+    "answers": ["to finish", "to end"]
+  },
+  {
+    "question": "entender",
+    "answers": ["to understand"]
+  },
+  {
+    "question": "recordar",
+    "answers": ["to remember"]
+  },
+  {
+    "question": "olvidar",
+    "answers": ["to forget"]
+  },
+  {
+    "question": "estoy",
+    "answers": ["I am"]
+  },
+  {
+    "question": "estás",
+    "answers": ["you are"]
+  },
+  {
+    "question": "está",
+    "answers": ["he is", "she is", "you are"]
+  },
+  {
+    "question": "eres",
+    "answers": ["you are"]
+  },
+  {
+    "question": "es",
+    "answers": ["he is", "she is", "it is"]
+  },
+  {
+    "question": "tengo",
+    "answers": ["I have"]
+  },
+  {
+    "question": "tienes",
+    "answers": ["you have"]
+  },
+  {
+    "question": "quiero",
+    "answers": ["I want"]
+  },
+  {
+    "question": "quieres",
+    "answers": ["you want"]
+  },
+  {
+    "question": "puedo",
+    "answers": ["I can"]
+  },
+  {
+    "question": "puedes",
+    "answers": ["you can"]
+  },
+  {
+    "question": "voy",
+    "answers": ["I go", "I am going"]
+  },
+  {
+    "question": "vas",
+    "answers": ["you go", "you are going"]
+  },
+  {
+    "question": "fui",
+    "answers": ["I went", "I was"]
+  },
+  {
+    "question": "tenía",
+    "answers": ["I had", "I used to have"]
+  },
+  {
+    "question": "tendrás",
+    "answers": ["you will have"]
+  },
+  {
+    "question": "seré",
+    "answers": ["I will be"]
+  }
+]

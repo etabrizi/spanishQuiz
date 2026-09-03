@@ -23,6 +23,19 @@ button {
   min-width: 0;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
 .app {
   position: relative;
   min-height: 100vh;
@@ -790,13 +803,34 @@ input:disabled {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid rgba(23, 33, 29, 0.12);
+  border: 1px solid rgba(47, 127, 114, 0.18);
   border-radius: 8px;
   padding: 0 14px;
-  color: #ffffff;
-  background: #17211d;
+  color: #1f665c;
+  background: #edf8f5;
   font-weight: 800;
   cursor: pointer;
+}
+
+.data-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.load-questions-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(47, 127, 114, 0.18);
+  border-radius: 8px;
+  padding: 0 14px;
+  color: #1f665c;
+  background: #edf8f5;
+  font-weight: 800;
 }
 
 @media (max-width: 560px) {
@@ -870,13 +904,15 @@ input:disabled {
   .player-form button,
   .answer-row button,
   .editor-row button,
+  .load-questions-button,
   .download-questions-button,
   .restore-questions-button,
   .reset-leaderboard-button {
     width: 100%;
   }
 
-  .editor-row {
+  .editor-row,
+  .data-actions {
     grid-template-columns: 1fr;
   }
 }

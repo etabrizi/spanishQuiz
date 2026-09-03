@@ -13,6 +13,7 @@ import {
   Timer,
   Trash2,
   Trophy,
+  Upload,
   User,
   Volume2,
   X,
@@ -453,7 +454,7 @@ function getTranslateSentenceBank(sourceCards) {
     }
 
     if (verbForm) {
-      addSentence(`${verbForm.yo} ${getCardQuestion(ahora) ?? ''}.`.replace(/\s+\./, '.'), `I ${verbForm.english}${ahora ? ' now' : ''}.`);
+      addSentence(`${verbForm.yo}${ahora ? ` ${getCardQuestion(ahora)}` : ''}.`, `I ${verbForm.english}${ahora ? ' now' : ''}.`);
     }
 
     timeWords.forEach((timeWord) => {
@@ -510,6 +511,16 @@ function getTranslateSentenceBank(sourceCards) {
 
 function getRoundCards(sourceCards) {
   return shuffleCards(sourceCards).slice(0, Math.min(ROUND_CARD_COUNT, sourceCards.length));
+}
+
+function getPrimarySourceCards(baseCards, customCards) {
+  const cardsByKey = new Map();
+
+  [...baseCards, ...customCards].forEach((card) => {
+    cardsByKey.set(getCardKey(card), card);
+  });
+
+  return [...cardsByKey.values()];
 }
 
 function getTranslatePromptCards(sourceCards) {
@@ -650,6 +661,7 @@ function App() {
   const inputRef = useRef(null);
   const playerNameInputRef = useRef(null);
   const nextButtonRef = useRef(null);
+  const dataFileInputRef = useRef(null);
   const answerRef = useRef('');
   const roundResultsRef = useRef([]);
   const quizModeRef = useRef(QUIZ_MODE.NORMAL);
@@ -828,7 +840,7 @@ function App() {
 
   function replaceCustomCards(nextCustomCards, nextBaseCards = visibleBaseCards) {
     const sanitizedCustomCards = sanitizeCards(nextCustomCards);
-    const nextSourceCards = [...nextBaseCards, ...sanitizedCustomCards];
+    const nextSourceCards = getPrimarySourceCards(nextBaseCards, sanitizedCustomCards);
 
     saveCustomCards(sanitizedCustomCards);
     setCustomCards(sanitizedCustomCards);
@@ -855,23 +867,31 @@ function App() {
 
         const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
         const nextBaseCards = importedCards.filter((card) => !removedCardKeys.includes(getCardKey(card)));
-        const nextSourceCards = [...nextBaseCards, ...savedCustomCards];
+        const nextSourceCards = getPrimarySourceCards(nextBaseCards, savedCustomCards);
 
         setBaseCards(importedCards);
         setCustomCards(savedCustomCards);
         setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
-        setDeckMessage(`${nextSourceCards.length} questions loaded.`);
+        setDeckMessage(
+          savedCustomCards.length
+            ? `${nextSourceCards.length} questions loaded.`
+            : `${nextSourceCards.length} starter questions loaded.`
+        );
       } catch (error) {
         const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
         const nextBaseCards = FALLBACK_CARDS.filter((card) => !removedCardKeys.includes(getCardKey(card)));
-        const nextSourceCards = [...nextBaseCards, ...savedCustomCards];
+        const nextSourceCards = getPrimarySourceCards(nextBaseCards, savedCustomCards);
 
         setBaseCards(FALLBACK_CARDS);
         setCustomCards(savedCustomCards);
         setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
-        setDeckMessage(`${nextSourceCards.length} questions loaded.`);
+        setDeckMessage(
+          savedCustomCards.length
+            ? `${nextSourceCards.length} questions loaded.`
+            : `${nextSourceCards.length} starter questions loaded.`
+        );
       }
     }
 
@@ -1079,7 +1099,7 @@ function App() {
   function deleteBaseCard(cardToDelete) {
     const nextRemovedBaseCardKeys = [...new Set([...removedBaseCardKeys, getCardKey(cardToDelete)])];
     const nextBaseCards = baseCards.filter((card) => !nextRemovedBaseCardKeys.includes(getCardKey(card)));
-    const nextSourceCards = [...nextBaseCards, ...customCards];
+    const nextSourceCards = getPrimarySourceCards(nextBaseCards, customCards);
 
     saveRemovedBaseCardKeys(nextRemovedBaseCardKeys);
     setRemovedBaseCardKeys(nextRemovedBaseCardKeys);
@@ -1090,8 +1110,40 @@ function App() {
   function restoreBaseCards() {
     window.localStorage.removeItem(REMOVED_BASE_CARDS_STORAGE_KEY);
     setRemovedBaseCardKeys([]);
-    resetRound([...baseCards, ...customCards]);
-    setDeckMessage(`${baseCards.length + customCards.length} questions ready.`);
+    const nextSourceCards = getPrimarySourceCards(baseCards, customCards);
+
+    resetRound(nextSourceCards);
+    setDeckMessage(`${nextSourceCards.length} questions ready.`);
+  }
+
+  function openQuestionDataFile() {
+    dataFileInputRef.current?.click();
+  }
+
+  async function loadQuestionData(event) {
+    const [file] = event.target.files;
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const importedCards = sanitizeCards(JSON.parse(await file.text()));
+
+      if (!importedCards.length) {
+        setDeckMessage('No valid questions found in that file.');
+        return;
+      }
+
+      saveCustomCards(importedCards);
+      setCustomCards(importedCards);
+      resetRound(importedCards);
+      setDeckMessage(`${importedCards.length} saved questions loaded.`);
+    } catch (error) {
+      setDeckMessage('Could not load that JSON file.');
+    } finally {
+      event.target.value = '';
+    }
   }
 
   function downloadQuestionData() {
@@ -1330,16 +1382,6 @@ function App() {
               <span>{sourceCards.length} active</span>
             </div>
 
-            <button
-              className="download-questions-button"
-              type="button"
-              onClick={downloadQuestionData}
-              disabled={!sourceCards.length}
-            >
-              <Download size={18} />
-              Download JSON
-            </button>
-
             <form className="editor-form" onSubmit={addCustomCard}>
               <label htmlFor="new-question">Question</label>
               <input
@@ -1430,6 +1472,29 @@ function App() {
                 ))}
               </div>
             )}
+
+            <div className="data-actions">
+              <input
+                ref={dataFileInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="visually-hidden"
+                onChange={loadQuestionData}
+              />
+              <button className="load-questions-button" type="button" onClick={openQuestionDataFile}>
+                <Upload size={18} />
+                Load data
+              </button>
+              <button
+                className="download-questions-button"
+                type="button"
+                onClick={downloadQuestionData}
+                disabled={!sourceCards.length}
+              >
+                <Download size={18} />
+                Download data
+              </button>
+            </div>
           </section>
         )}
 
