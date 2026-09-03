@@ -332,6 +332,16 @@ function mergeCardsByQuestion(cards) {
   return [...cardsByQuestion.values()];
 }
 
+function getQuestionKey(card) {
+  return normalizeAnswer(getCardQuestion(card) ?? '');
+}
+
+function removeStarterDuplicates(starterCards, savedCards) {
+  const starterQuestionKeys = new Set(starterCards.map(getQuestionKey));
+
+  return mergeCardsByQuestion(savedCards).filter((card) => !starterQuestionKeys.has(getQuestionKey(card)));
+}
+
 function getRandomAnswer(card) {
   const answers = getCardAnswers(card);
 
@@ -697,6 +707,7 @@ function App() {
     () => leaderboard.filter((entry) => (entry.mode ?? QUIZ_MODE.NORMAL) === QUIZ_MODE.NORMAL),
     [leaderboard]
   );
+  const duplicateQuestionCount = Math.max(0, visibleBaseCards.length + customCards.length - sourceCards.length);
   const translateSentenceCount = useMemo(() => getTranslateSentenceBank(sourceCards).length, [sourceCards]);
   const canStartQuiz = quizMode === QUIZ_MODE.TRANSLATE ? translateSentenceCount >= 3 : sourceCards.length > 0;
 
@@ -866,7 +877,7 @@ function App() {
   }
 
   function replaceCustomCards(nextCustomCards, nextBaseCards = visibleBaseCards) {
-    const sanitizedCustomCards = sanitizeCards(nextCustomCards);
+    const sanitizedCustomCards = removeStarterDuplicates(nextBaseCards, sanitizeCards(nextCustomCards));
     const nextSourceCards = getPrimarySourceCards(nextBaseCards, sanitizedCustomCards);
 
     saveCustomCards(sanitizedCustomCards);
@@ -894,29 +905,33 @@ function App() {
 
         const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
         const nextBaseCards = importedCards.filter((card) => !removedCardKeys.includes(getCardKey(card)));
-        const nextSourceCards = getPrimarySourceCards(nextBaseCards, savedCustomCards);
+        const nextCustomCards = removeStarterDuplicates(nextBaseCards, savedCustomCards);
+        const nextSourceCards = getPrimarySourceCards(nextBaseCards, nextCustomCards);
 
         setBaseCards(importedCards);
-        setCustomCards(savedCustomCards);
+        saveCustomCards(nextCustomCards);
+        setCustomCards(nextCustomCards);
         setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
         setDeckMessage(
-          savedCustomCards.length
-            ? `${nextSourceCards.length} questions loaded.`
+          nextCustomCards.length
+            ? `${nextSourceCards.length} unique questions loaded.`
             : `${nextSourceCards.length} starter questions loaded.`
         );
       } catch (error) {
         const removedCardKeys = loadStoredCardKeys(REMOVED_BASE_CARDS_STORAGE_KEY);
         const nextBaseCards = FALLBACK_CARDS.filter((card) => !removedCardKeys.includes(getCardKey(card)));
-        const nextSourceCards = getPrimarySourceCards(nextBaseCards, savedCustomCards);
+        const nextCustomCards = removeStarterDuplicates(nextBaseCards, savedCustomCards);
+        const nextSourceCards = getPrimarySourceCards(nextBaseCards, nextCustomCards);
 
         setBaseCards(FALLBACK_CARDS);
-        setCustomCards(savedCustomCards);
+        saveCustomCards(nextCustomCards);
+        setCustomCards(nextCustomCards);
         setRemovedBaseCardKeys(removedCardKeys);
         resetRound(nextSourceCards);
         setDeckMessage(
-          savedCustomCards.length
-            ? `${nextSourceCards.length} questions loaded.`
+          nextCustomCards.length
+            ? `${nextSourceCards.length} unique questions loaded.`
             : `${nextSourceCards.length} starter questions loaded.`
         );
       }
@@ -1107,6 +1122,11 @@ function App() {
       return;
     }
 
+    if (sourceCards.some((card) => getQuestionKey(card) === getQuestionKey(nextCard))) {
+      setDeckMessage(`${nextCard.question} is already in your questions.`);
+      return;
+    }
+
     replaceCustomCards([...customCards, nextCard]);
     setNewQuestion('');
     setNewAnswer('');
@@ -1155,10 +1175,13 @@ function App() {
         return;
       }
 
-      saveCustomCards(importedCards);
-      setCustomCards(importedCards);
-      resetRound(importedCards);
-      setDeckMessage(`${importedCards.length} saved questions loaded.`);
+      const nextCustomCards = removeStarterDuplicates(visibleBaseCards, [...customCards, ...importedCards]);
+      const nextSourceCards = getPrimarySourceCards(visibleBaseCards, nextCustomCards);
+
+      saveCustomCards(nextCustomCards);
+      setCustomCards(nextCustomCards);
+      resetRound(nextSourceCards);
+      setDeckMessage(`${nextSourceCards.length} unique questions loaded.`);
     } catch (error) {
       setDeckMessage('Could not load that JSON file.');
     } finally {
@@ -1399,7 +1422,7 @@ function App() {
           <section className="card-editor" aria-label="Manage questions">
             <div className="editor-heading">
               <h2>Manage words</h2>
-              <span>{sourceCards.length} active</span>
+              <span>{sourceCards.length} active unique</span>
             </div>
 
             <form className="editor-form" onSubmit={addCustomCard}>
@@ -1432,7 +1455,7 @@ function App() {
 
             <div className="editor-heading">
               <h2>Question data</h2>
-              <span>{visibleBaseCards.length} showing</span>
+              <span>{visibleBaseCards.length} starter</span>
             </div>
 
             {visibleBaseCards.length === 0 ? (
@@ -1469,6 +1492,10 @@ function App() {
               <h2>Added words</h2>
               <span>{customCards.length} saved</span>
             </div>
+
+            {duplicateQuestionCount > 0 && (
+              <p className="mode-note">{duplicateQuestionCount} saved questions match starter questions and are only counted once in quizzes.</p>
+            )}
 
             {customCards.length === 0 ? (
               <p className="empty-state">No added words yet.</p>
