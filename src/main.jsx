@@ -226,7 +226,12 @@ function loadLeaderboard() {
     }
 
     return scores
-      .filter((entry) => entry.name && Number.isFinite(entry.score))
+      .filter(
+        (entry) =>
+          entry.name &&
+          Number.isFinite(entry.score) &&
+          (entry.mode ?? QUIZ_MODE.NORMAL) === QUIZ_MODE.NORMAL
+      )
       .sort(compareLeaderboardEntries)
       .slice(0, 10);
   } catch (error) {
@@ -855,12 +860,16 @@ function App() {
       total: isStreakMode(quizModeRef.current) ? finalResults.length : cards.length,
       date: new Date().toLocaleDateString()
     };
-    const nextLeaderboard = [nextEntry, ...leaderboard]
-      .sort(compareLeaderboardEntries)
-      .slice(0, 10);
+    if (quizModeRef.current === QUIZ_MODE.NORMAL) {
+      const nextLeaderboard = [nextEntry, ...leaderboard]
+        .filter((entry) => (entry.mode ?? QUIZ_MODE.NORMAL) === QUIZ_MODE.NORMAL)
+        .sort(compareLeaderboardEntries)
+        .slice(0, 10);
 
-    setLeaderboard(nextLeaderboard);
-    saveLeaderboard(nextLeaderboard);
+      setLeaderboard(nextLeaderboard);
+      saveLeaderboard(nextLeaderboard);
+    }
+
     setLastRoundSummary({
       name: playerName.trim(),
       mode: quizModeRef.current,
