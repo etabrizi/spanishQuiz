@@ -662,6 +662,55 @@ function speakSpanish(text) {
   window.speechSynthesis.speak(utterance);
 }
 
+function ScrollablePane({ children, className, label }) {
+  const paneRef = useRef(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  const updateScrollCue = () => {
+    const pane = paneRef.current;
+
+    if (!pane) {
+      return;
+    }
+
+    const isScrollable = pane.scrollHeight > pane.clientHeight + 1;
+    const isAtBottom = pane.scrollTop + pane.clientHeight >= pane.scrollHeight - 2;
+    setHasMore(isScrollable && !isAtBottom);
+  };
+
+  useLayoutEffect(() => {
+    const pane = paneRef.current;
+
+    if (!pane) {
+      return undefined;
+    }
+
+    updateScrollCue();
+    const resizeObserver = new ResizeObserver(updateScrollCue);
+    resizeObserver.observe(pane);
+
+    return () => resizeObserver.disconnect();
+  }, [children]);
+
+  return (
+    <div className={`scroll-pane${hasMore ? ' has-more' : ''}`}>
+      <div
+        ref={paneRef}
+        className={className}
+        role="region"
+        aria-label={label}
+        tabIndex={0}
+        onScroll={updateScrollCue}
+      >
+        {children}
+      </div>
+      <div className="scroll-cue" aria-hidden="true">
+        <span className="scroll-cue-arrow">↓</span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [view, setView] = useState(VIEW.HOME);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
@@ -1475,7 +1524,7 @@ function App() {
             {visibleBaseCards.length === 0 ? (
               <p className="empty-state">No question data words showing.</p>
             ) : (
-              <div className="custom-card-list">
+              <ScrollablePane className="custom-card-list" label="Starter questions">
                 {visibleBaseCards.map((card, index) => (
                   <div className="custom-card-item" key={`${getCardKey(card)}-${index}`}>
                     <div>
@@ -1492,7 +1541,7 @@ function App() {
                     </button>
                   </div>
                 ))}
-              </div>
+              </ScrollablePane>
             )}
 
             {removedBaseCardKeys.length > 0 && (
@@ -1514,7 +1563,7 @@ function App() {
             {customCards.length === 0 ? (
               <p className="empty-state">No added words yet.</p>
             ) : (
-              <div className="custom-card-list">
+              <ScrollablePane className="custom-card-list" label="Added questions">
                 {customCards.map((card, index) => (
                   <div className="custom-card-item" key={`${card.question}-${getCardAnswer(card)}-${index}`}>
                     <div>
@@ -1531,7 +1580,7 @@ function App() {
                     </button>
                   </div>
                 ))}
-              </div>
+              </ScrollablePane>
             )}
 
             <div className="data-actions">
@@ -1579,7 +1628,7 @@ function App() {
               </div>
             </div>
 
-            <div className="review-list">
+            <ScrollablePane className="review-list" label="Answer review">
               {lastRoundSummary.results.map((result, index) => (
                 <div className={`review-row ${result.status}`} key={`${result.question}-${index}`}>
                   {result.status === 'exact' || result.status === 'close' ? (
@@ -1596,14 +1645,14 @@ function App() {
                   {!isStreakMode(lastRoundSummary.mode) && <b>{result.points}</b>}
                 </div>
               ))}
-            </div>
+            </ScrollablePane>
 
             <div className="home-actions">
               <button type="button" onClick={() => setView(VIEW.HOME)}>
                 <Play size={18} />
                 New game
               </button>
-              <button type="button" onClick={() => setView(VIEW.LEADERBOARD)}>
+              <button className="review-leaderboard-button" type="button" onClick={() => setView(VIEW.LEADERBOARD)}>
                 <Trophy size={18} />
                 Leaderboard
               </button>

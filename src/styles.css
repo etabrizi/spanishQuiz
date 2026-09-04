@@ -337,6 +337,16 @@ h1 {
   gap: 10px;
 }
 
+.home-actions .review-leaderboard-button {
+  border-color: rgba(31, 41, 37, 0.18);
+  background: #f1f2ee;
+}
+
+.home-actions .review-leaderboard-button:hover {
+  border-color: rgba(31, 41, 37, 0.3);
+  background: #e7e9e5;
+}
+
 .stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -654,6 +664,89 @@ input:disabled {
   gap: 8px;
   max-height: 280px;
   overflow: auto;
+}
+
+.scroll-pane {
+  position: relative;
+  min-width: 0;
+}
+
+.custom-card-list,
+.review-list {
+  scrollbar-width: auto;
+  scrollbar-color: rgba(36, 117, 104, 0.72) #e8ede9;
+  scrollbar-gutter: stable;
+}
+
+.custom-card-list::-webkit-scrollbar,
+.review-list::-webkit-scrollbar {
+  width: 11px;
+}
+
+.custom-card-list::-webkit-scrollbar-track,
+.review-list::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: #e8ede9;
+}
+
+.custom-card-list::-webkit-scrollbar-thumb,
+.review-list::-webkit-scrollbar-thumb {
+  border: 3px solid #e8ede9;
+  border-radius: 999px;
+  background: rgba(36, 117, 104, 0.78);
+}
+
+.custom-card-list:focus-visible,
+.review-list:focus-visible {
+  outline: 2px solid rgba(36, 117, 104, 0.55);
+  outline-offset: 3px;
+}
+
+.scroll-cue {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 72px;
+  padding-bottom: 7px;
+  color: rgba(25, 88, 79, 0.55);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff 78%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(5px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.scroll-pane.has-more .scroll-cue {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.scroll-cue-arrow {
+  font-size: 1.6rem;
+  font-weight: 800;
+  line-height: 1;
+  animation: scroll-cue-bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes scroll-cue-bounce {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+
+  50% {
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue-arrow {
+    animation: none;
+  }
 }
 
 .leaderboard {
