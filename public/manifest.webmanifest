@@ -1,0 +1,27 @@
+{
+  "id": "/",
+  "name": "Spanish Quiz",
+  "short_name": "Spanish Quiz",
+  "description": "Build your Spanish vocabulary with quick flash-card quizzes, translation challenges, streaks, and score tracking.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f0e9",
+  "theme_color": "#aa151b",
+  "lang": "en",
+  "categories": ["education", "games"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
