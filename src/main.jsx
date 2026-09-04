@@ -722,9 +722,10 @@ function App() {
     }
 
     const isPlaying = view === VIEW.QUIZ;
+    const shellWidth = isPlaying ? '820px' : view === VIEW.HOME ? '640px' : '560px';
 
     gsap.to(shellRef.current, {
-      '--shell-width': isPlaying ? '820px' : '520px',
+      '--shell-width': shellWidth,
       duration: isPlaying ? 0.72 : 0.34,
       ease: isPlaying ? 'elastic.out(1, 0.58)' : 'power3.out'
     });
@@ -1214,7 +1215,7 @@ function App() {
     <main className="app">
       <section
         ref={shellRef}
-        className={`quiz-shell ${view === VIEW.QUIZ ? 'is-playing' : ''}`}
+        className={`quiz-shell view-${view} mode-${quizMode} ${view === VIEW.QUIZ ? 'is-playing' : ''}`}
         aria-label="Spanish flash card quiz"
       >
         {view === VIEW.QUIZ && (
@@ -1226,6 +1227,7 @@ function App() {
         {view !== VIEW.QUIZ && (
           <header className="top-bar">
             <div>
+              <span className="brand-kicker">Practice a little every day</span>
               <div className="title-row">
                 <h1>Spanish Quiz</h1>
               </div>
@@ -1260,39 +1262,41 @@ function App() {
         )}
 
         {view === VIEW.HOME && (
-          <div className="mode-selector" aria-label="Quiz mode">
-            <button
-              className={quizMode === QUIZ_MODE.NORMAL ? 'active' : ''}
-              type="button"
-              onClick={() => setQuizMode(QUIZ_MODE.NORMAL)}
-              aria-label="Normal mode"
-              title="Normal mode"
-            >
-              <Trophy size={18} />
-            </button>
-            <button
-              className={quizMode === QUIZ_MODE.STREAK ? 'active' : ''}
-              type="button"
-              onClick={() => setQuizMode(QUIZ_MODE.STREAK)}
-              aria-label="Streak mode"
-              title="Streak mode"
-            >
-              <Flame size={18} />
-            </button>
-            <button
-              className={quizMode === QUIZ_MODE.TRANSLATE ? 'active' : ''}
-              type="button"
-              onClick={() => setQuizMode(QUIZ_MODE.TRANSLATE)}
-              aria-label="Translate mode"
-              title="Translate mode"
-            >
-              <Speech size={18} />
-            </button>
-          </div>
-        )}
-
-        {view === VIEW.HOME && (
           <section className="home-screen" aria-label="Player setup">
+            <div className="mode-picker">
+              <div className="mode-picker-heading">
+                <h2>Choose your game</h2>
+              </div>
+              <div className="mode-selector" aria-label="Quiz mode">
+                <button
+                  className={quizMode === QUIZ_MODE.NORMAL ? 'active' : ''}
+                  type="button"
+                  onClick={() => setQuizMode(QUIZ_MODE.NORMAL)}
+                  aria-pressed={quizMode === QUIZ_MODE.NORMAL}
+                >
+                  <span className="mode-icon"><Trophy size={25} /></span>
+                  <strong>Normal</strong>
+                </button>
+                <button
+                  className={quizMode === QUIZ_MODE.STREAK ? 'active' : ''}
+                  type="button"
+                  onClick={() => setQuizMode(QUIZ_MODE.STREAK)}
+                  aria-pressed={quizMode === QUIZ_MODE.STREAK}
+                >
+                  <span className="mode-icon"><Flame size={25} /></span>
+                  <strong>Streak</strong>
+                </button>
+                <button
+                  className={quizMode === QUIZ_MODE.TRANSLATE ? 'active' : ''}
+                  type="button"
+                  onClick={() => setQuizMode(QUIZ_MODE.TRANSLATE)}
+                  aria-pressed={quizMode === QUIZ_MODE.TRANSLATE}
+                >
+                  <span className="mode-icon"><Speech size={25} /></span>
+                  <strong>Translate</strong>
+                </button>
+              </div>
+            </div>
             <form className="player-form" onSubmit={savePlayer}>
               <label htmlFor="player-name">Player name</label>
               <div className="answer-row">
@@ -1302,11 +1306,12 @@ function App() {
                   type="text"
                   value={nameDraft}
                   onChange={(event) => setNameDraft(event.target.value)}
+                  placeholder="Enter your name"
                   autoComplete="name"
                 />
                 <button type="submit" disabled={!canStartQuiz}>
                   <Play size={18} />
-                  Start
+                  Start quiz
                 </button>
               </div>
               {quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
