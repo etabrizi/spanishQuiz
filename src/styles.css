@@ -498,10 +498,12 @@ h1 {
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
 }
 
-.answer-options button:not(:disabled):hover {
-  transform: translateY(-1px);
-  border-color: rgba(36, 117, 104, 0.48);
-  background: #f2faf7;
+@media (hover: hover) and (pointer: fine) {
+  .answer-options button:not(:disabled):hover {
+    transform: translateY(-1px);
+    border-color: rgba(36, 117, 104, 0.48);
+    background: #f2faf7;
+  }
 }
 
 .answer-options button:focus-visible {

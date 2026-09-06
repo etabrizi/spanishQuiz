@@ -319,9 +319,8 @@ function shuffleCards(cards) {
 function prioritiseDifficultCards(cards, difficultKeys = []) {
   const difficult = new Set(difficultKeys);
 
-  // Shuffle within each group, then ask marked prompts first without repeats.
-  // Up to ten marks all fit in the first ten; larger groups rotate randomly.
-  return cards
+  // Shuffle within each group and prioritise flags without repeats.
+  const ordered = cards
     .map((card) => ({
       card,
       isDifficult: difficult.has(getQuestionKey(card)),
@@ -329,6 +328,15 @@ function prioritiseDifficultCards(cards, difficultKeys = []) {
     }))
     .sort((first, second) => Number(second.isDifficult) - Number(first.isDifficult) || first.priority - second.priority)
     .map(({ card }) => card);
+
+  // Start with an unflagged prompt when possible, then revisit flagged prompts.
+  // This leaves nine places for flags within the first ten questions.
+  const openerIndex = ordered.findIndex((card) => !difficult.has(getQuestionKey(card)));
+  if (openerIndex > 0) {
+    const [opener] = ordered.splice(openerIndex, 1);
+    ordered.unshift(opener);
+  }
+  return ordered;
 }
 
 function mergeCardsByQuestion(cards) {
@@ -1466,7 +1474,10 @@ function App() {
                     <button
                       key={option}
                       type="button"
-                      onClick={() => chooseTranslateOption(option)}
+                      onClick={(event) => {
+                        if (event.detail > 0) event.currentTarget.blur();
+                        chooseTranslateOption(option);
+                      }}
                       disabled={Boolean(feedback)}
                     >
                       {option}
