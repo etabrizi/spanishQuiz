@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Download,
   Flame,
+  Flag,
   ListPlus,
   RotateCcw,
   Play,
@@ -28,6 +29,7 @@ const ROUND_CARD_COUNT = 20;
 const QUESTIONS_URL = '/questions.json';
 const CUSTOM_CARDS_STORAGE_KEY = 'spanish-quiz-custom-cards';
 const REMOVED_BASE_CARDS_STORAGE_KEY = 'spanish-quiz-removed-base-cards';
+const DIFFICULT_QUESTIONS_STORAGE_KEY = 'spanish-quiz-difficult-questions';
 const LEADERBOARD_STORAGE_KEY = 'spanish-quiz-leaderboard';
 const BEST_STREAKER_STORAGE_KEY = 'spanish-quiz-best-streaker';
 const BEST_TRANSLATOR_STORAGE_KEY = 'spanish-quiz-best-translator';
@@ -314,6 +316,21 @@ function shuffleCards(cards) {
   return [...cards].sort(() => Math.random() - 0.5);
 }
 
+function prioritiseDifficultCards(cards, difficultKeys = []) {
+  const difficult = new Set(difficultKeys);
+
+  // Shuffle within each group, then ask marked prompts first without repeats.
+  // Up to ten marks all fit in the first ten; larger groups rotate randomly.
+  return cards
+    .map((card) => ({
+      card,
+      isDifficult: difficult.has(getQuestionKey(card)),
+      priority: Math.random()
+    }))
+    .sort((first, second) => Number(second.isDifficult) - Number(first.isDifficult) || first.priority - second.priority)
+    .map(({ card }) => card);
+}
+
 function mergeCardsByQuestion(cards) {
   const cardsByQuestion = new Map();
 
@@ -547,24 +564,24 @@ function getTranslateSentenceBank(sourceCards) {
   return sentences;
 }
 
-function getRoundCards(sourceCards) {
+function getRoundCards(sourceCards, difficultKeys) {
   const uniqueCards = mergeCardsByQuestion(sourceCards);
 
-  return shuffleCards(uniqueCards).slice(0, Math.min(ROUND_CARD_COUNT, uniqueCards.length));
+  return prioritiseDifficultCards(uniqueCards, difficultKeys).slice(0, Math.min(ROUND_CARD_COUNT, uniqueCards.length));
 }
 
 function getPrimarySourceCards(baseCards, customCards) {
   return mergeCardsByQuestion([...baseCards, ...customCards]);
 }
 
-function getTranslatePromptCards(sourceCards) {
+function getTranslatePromptCards(sourceCards, difficultKeys) {
   const sentenceBank = getTranslateSentenceBank(sourceCards);
 
   if (sentenceBank.length < 3) {
     return [];
   }
 
-  return shuffleCards(sentenceBank).map((sentence) => {
+  return prioritiseDifficultCards(sentenceBank, difficultKeys).map((sentence) => {
     const correctAnswer = getCardAnswer(sentence);
     const wrongAnswers = [];
 
@@ -587,12 +604,14 @@ function getTranslatePromptCards(sourceCards) {
   });
 }
 
-function getModeCards(sourceCards, quizMode) {
+function getModeCards(sourceCards, quizMode, difficultKeys) {
   if (quizMode === QUIZ_MODE.TRANSLATE) {
-    return getTranslatePromptCards(sourceCards);
+    return getTranslatePromptCards(sourceCards, difficultKeys);
   }
 
-  return quizMode === QUIZ_MODE.STREAK ? shuffleCards(mergeCardsByQuestion(sourceCards)) : getRoundCards(sourceCards);
+  return quizMode === QUIZ_MODE.STREAK
+    ? prioritiseDifficultCards(mergeCardsByQuestion(sourceCards), difficultKeys)
+    : getRoundCards(sourceCards, difficultKeys);
 }
 
 function isStreakMode(quizMode) {
@@ -712,6 +731,23 @@ function ScrollablePane({ children, className, label }) {
 }
 
 function App() {
+  const [difficultKeys, setDifficultKeys] = useState(() => loadStoredCardKeys(DIFFICULT_QUESTIONS_STORAGE_KEY));
+  const difficultKeysRef = useRef(difficultKeys);
+
+  function updateDifficultKeys(nextKeys) {
+    window.localStorage.setItem(DIFFICULT_QUESTIONS_STORAGE_KEY, JSON.stringify(nextKeys));
+    difficultKeysRef.current = nextKeys;
+    setDifficultKeys(nextKeys);
+  }
+
+  function toggleDifficult(question) {
+    const key = normalizeAnswer(question);
+    const currentKeys = difficultKeysRef.current;
+    updateDifficultKeys(currentKeys.includes(key)
+      ? currentKeys.filter((currentKey) => currentKey !== key)
+      : [...currentKeys, key]);
+  }
+
   const [view, setView] = useState(VIEW.HOME);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
   const [customCards, setCustomCards] = useState(() => loadStoredCards(CUSTOM_CARDS_STORAGE_KEY));
@@ -849,7 +885,7 @@ function App() {
 
   function resetRound(nextSourceCards = sourceCards) {
     setSourceCards(nextSourceCards);
-    setCards(getModeCards(nextSourceCards, quizModeRef.current));
+    setCards(getModeCards(nextSourceCards, quizModeRef.current, difficultKeysRef.current));
     setCardIndex(0);
     setAnswer('');
     setScore(0);
@@ -1605,6 +1641,19 @@ function App() {
                 Download data
               </button>
             </div>
+
+            {difficultKeys.length > 0 && (
+              <div className="difficult-settings">
+                <div>
+                  <strong>Flagged questions · {difficultKeys.length}</strong>
+                  <p>Flagged questions appear earlier in future games for extra practice. Reset your flags when you’re ready for a fresh start.</p>
+                </div>
+                <button type="button" onClick={() => updateDifficultKeys([])}>
+                  <RotateCcw size={16} aria-hidden="true" />
+                  Reset all flags
+                </button>
+              </div>
+            )}
           </section>
         )}
 
@@ -1628,6 +1677,7 @@ function App() {
               </div>
             </div>
 
+            <p className="difficulty-note">Need more practice? Flag a question to see it earlier in future games.</p>
             <ScrollablePane className="review-list" label="Answer review">
               {lastRoundSummary.results.map((result, index) => (
                 <div className={`review-row ${result.status}`} key={`${result.question}-${index}`}>
@@ -1643,6 +1693,16 @@ function App() {
                     </span>
                   </div>
                   {!isStreakMode(lastRoundSummary.mode) && <b>{result.points}</b>}
+                  <button
+                    className="difficulty-toggle"
+                    type="button"
+                    aria-pressed={difficultKeys.includes(normalizeAnswer(result.question))}
+                    aria-label={`Difficult: ${result.question}`}
+                    title={difficultKeys.includes(normalizeAnswer(result.question)) ? 'Unmark difficult' : 'Mark difficult'}
+                    onClick={() => toggleDifficult(result.question)}
+                  >
+                    <Flag size={18} aria-hidden="true" />
+                  </button>
                 </div>
               ))}
             </ScrollablePane>

@@ -797,7 +797,7 @@ input:disabled {
 
 .review-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
   min-height: 66px;
@@ -838,6 +838,74 @@ input:disabled {
 .review-row b {
   color: #17211d;
   font-size: 1rem;
+}
+
+.difficulty-note,
+.difficult-settings p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.difficult-settings {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(31, 41, 37, 0.14);
+  border-radius: 8px;
+  background: #f8faf7;
+}
+
+.difficult-settings strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.difficulty-toggle,
+.difficult-settings button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid rgba(31, 41, 37, 0.22);
+  border-radius: 8px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.difficulty-toggle {
+  grid-column: 4;
+  grid-row: 1;
+  justify-self: end;
+  width: 44px;
+  padding: 0;
+}
+
+.difficulty-toggle[aria-pressed="true"] {
+  color: #725000;
+  border-color: #b18400;
+  background: #fff3c4;
+}
+
+.difficulty-toggle[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+
+.difficulty-toggle:hover,
+.difficult-settings button:not(:disabled):hover {
+  border-color: var(--green);
+}
+
+.difficulty-toggle:focus-visible,
+.difficult-settings button:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 
 .leaderboard-list {
