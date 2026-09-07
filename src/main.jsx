@@ -21,6 +21,7 @@ import {
   XCircle
 } from 'lucide-react';
 import './styles.css';
+import OfflineStatus from './OfflineStatus';
 
 const FALLBACK_CARDS = [{ question: 'hola', answers: ['hello'] }];
 
@@ -637,8 +638,9 @@ function getSpanishVoice() {
 
   const voices = window.speechSynthesis.getVoices();
   const spanishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith('es'));
+  const localVoices = spanishVoices.filter((voice) => voice.localService);
 
-  return spanishVoices
+  return (localVoices.length ? localVoices : spanishVoices)
     .map((voice) => {
       const name = voice.name.toLowerCase();
       const language = voice.lang.toLowerCase();
@@ -1325,6 +1327,7 @@ function App() {
                 <h1>Spanish Quiz</h1>
               </div>
               <p className="deck-message">{deckMessage}</p>
+              <OfflineStatus />
             </div>
           </header>
         )}

@@ -20,6 +20,25 @@ Open the **Manage** screen in the app to add your own Spanish words and accepted
 
 The app also includes a `public/questions.json` file with the starter question data.
 
+## Offline Use
+
+Open the deployed app once while online and wait for “Ready to use offline”. It saves the app,
+starter questions, and images for later offline use. You can then reopen the same
+URL without a connection, or add it to your home screen using your browser's
+installation option. Custom questions and scores stay in that browser on that device.
+
+Pronunciation prefers installed Spanish voices. If your device has no local Spanish
+voice, speech may need a connection; the quiz itself still works offline.
+
+New releases download when you open the app online and take effect after all app
+tabs/windows close and you reopen it. Clearing site data removes the offline copy
+and saved questions/scores. Browsers can also evict stored site data.
+
+Offline caching runs in production builds served over HTTPS (or localhost), not in
+the Vite development server. To check it locally, build and run the preview server,
+load the page, wait for the service worker to activate in browser developer tools,
+then switch the browser to offline and reload.
+
 ## Run Locally
 
 Install dependencies:
