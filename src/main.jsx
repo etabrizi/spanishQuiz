@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import OfflineStatus from './OfflineStatus';
+import { shuffleCards, orderPracticeCards } from './card-order.mjs';
 
 const FALLBACK_CARDS = [{ question: 'hola', answers: ['hello'] }];
 
@@ -313,31 +314,8 @@ function compareLeaderboardEntries(first, second) {
   return second.score - first.score;
 }
 
-function shuffleCards(cards) {
-  return [...cards].sort(() => Math.random() - 0.5);
-}
-
 function prioritiseDifficultCards(cards, difficultKeys = []) {
-  const difficult = new Set(difficultKeys);
-
-  // Shuffle within each group and prioritise flags without repeats.
-  const ordered = cards
-    .map((card) => ({
-      card,
-      isDifficult: difficult.has(getQuestionKey(card)),
-      priority: Math.random()
-    }))
-    .sort((first, second) => Number(second.isDifficult) - Number(first.isDifficult) || first.priority - second.priority)
-    .map(({ card }) => card);
-
-  // Start with an unflagged prompt when possible, then revisit flagged prompts.
-  // This leaves nine places for flags within the first ten questions.
-  const openerIndex = ordered.findIndex((card) => !difficult.has(getQuestionKey(card)));
-  if (openerIndex > 0) {
-    const [opener] = ordered.splice(openerIndex, 1);
-    ordered.unshift(opener);
-  }
-  return ordered;
+  return orderPracticeCards(cards, difficultKeys, getQuestionKey);
 }
 
 function mergeCardsByQuestion(cards) {
