@@ -2,8 +2,26 @@ import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import vm from 'node:vm';
 import test from 'node:test';
+import { createRequire } from 'node:module';
+import { transform } from 'esbuild';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 const source = await readFile(new URL('../dist/sw.js', import.meta.url), 'utf8');
+
+test('offline status renders with production JSX settings', async () => {
+  const component = await readFile(new URL('../src/OfflineStatus.jsx', import.meta.url), 'utf8');
+  const { code } = await transform(component, {
+    loader: 'jsx',
+    format: 'cjs',
+    define: { 'import.meta.env.PROD': 'true' },
+  });
+  const module = { exports: {} };
+  vm.runInNewContext(code, { module, exports: module.exports, require: createRequire(import.meta.url) });
+  const html = renderToStaticMarkup(React.createElement(module.exports.default));
+  assert.match(html, /Saving for offline use/);
+  assert.match(html, /role="status"/);
+});
 
 function worker({ failInstall = false } = {}) {
   const handlers = {};
