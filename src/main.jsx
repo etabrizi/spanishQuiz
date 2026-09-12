@@ -824,18 +824,28 @@ function App() {
         document.documentElement.style.setProperty('--visible-height', `${viewport.height}px`);
         document.documentElement.style.setProperty('--visible-top', `${viewport.offsetTop}px`);
         const active = document.activeElement;
-        if (window.matchMedia('(max-width: 560px)').matches && active instanceof HTMLInputElement) {
-          active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        if (window.matchMedia('(max-width: 560px), (any-pointer: coarse)').matches && active instanceof HTMLInputElement) {
+          const app = active.closest('.app');
+          if (!app) return;
+          const bounds = app.getBoundingClientRect();
+          const inputBounds = active.getBoundingClientRect();
+          // Scroll only the app, avoiding another document pan during keyboard animation.
+          const bottomOverflow = inputBounds.bottom - (bounds.bottom - 12);
+          const topOverflow = inputBounds.top - (bounds.top + 12);
+          if (bottomOverflow > 0) app.scrollTop += bottomOverflow;
+          else if (topOverflow < 0) app.scrollTop += topOverflow;
         }
       });
     };
     updateViewport();
     viewport.addEventListener('resize', updateViewport);
     viewport.addEventListener('scroll', updateViewport);
+    document.addEventListener('focusin', updateViewport);
     return () => {
       cancelAnimationFrame(frame);
       viewport.removeEventListener('resize', updateViewport);
       viewport.removeEventListener('scroll', updateViewport);
+      document.removeEventListener('focusin', updateViewport);
       document.documentElement.style.removeProperty('--visible-height');
       document.documentElement.style.removeProperty('--visible-top');
     };

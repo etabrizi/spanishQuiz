@@ -1133,7 +1133,9 @@ input:disabled {
   font-weight: 800;
 }
 
-@media (max-width: 560px) {
+/* Include tablets, including iPads with a trackpad attached. */
+@media (max-width: 560px), (any-pointer: coarse) {
+  html,
   body {
     overflow: hidden;
   }
@@ -1145,9 +1147,16 @@ input:disabled {
     width: 100%;
     height: var(--visible-height, 100dvh);
     min-height: 0;
+    align-items: safe center;
+    overflow: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
+@media (max-width: 560px) {
+  .app {
     display: block;
     padding: 0;
-    overflow: auto;
   }
 
   .quiz-shell {
