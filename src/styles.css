@@ -1221,7 +1221,7 @@ input:disabled {
   .quiz-shell {
     width: 100%;
     min-height: 100%;
-    align-content: safe center;
+    align-content: start;
     gap: 16px;
     padding: 24px 18px;
     border-radius: 0;
