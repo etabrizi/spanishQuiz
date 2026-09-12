@@ -1153,6 +1153,65 @@ input:disabled {
   }
 }
 
+/* Fit tablet content to the space actually visible above the keyboard. */
+@media (min-width: 561px) and (any-pointer: coarse) {
+  .app {
+    padding: 16px;
+    grid-template-rows: minmax(min-content, 1fr);
+  }
+
+  .compact-viewport .quiz-shell,
+  .compact-viewport .quiz-shell.is-playing {
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .compact-viewport .quiz-shell.is-playing {
+    padding-top: 60px;
+  }
+
+  .compact-viewport .flash-card {
+    min-height: clamp(120px, calc(var(--visible-height) * 0.25), 190px);
+    padding: 20px 60px;
+    gap: 10px;
+  }
+
+  .compact-viewport .flash-card p {
+    font-size: clamp(2rem, calc(var(--visible-height) * 0.065), 3.5rem);
+  }
+
+  .compact-viewport .stats div {
+    min-height: 58px;
+    padding: 8px 12px;
+    gap: 4px;
+  }
+
+  .compact-viewport .top-bar {
+    margin-bottom: 0;
+  }
+
+  .compact-viewport h1 {
+    font-size: 2rem;
+  }
+
+  .compact-viewport .home-screen,
+  .compact-viewport .mode-picker {
+    gap: 12px;
+  }
+
+  .compact-viewport .mode-selector button {
+    min-height: 64px;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .compact-viewport .mode-selector .mode-icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  }
+}
+
 @media (max-width: 560px) {
   .app {
     display: block;
