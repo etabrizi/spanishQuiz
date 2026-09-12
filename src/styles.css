@@ -32,6 +32,7 @@ body {
 
 button,
 input {
+  font-size: 16px;
   font: inherit;
 }
 
@@ -1133,7 +1134,17 @@ input:disabled {
 }
 
 @media (max-width: 560px) {
+  body {
+    overflow: hidden;
+  }
+
   .app {
+    position: fixed;
+    top: var(--visible-top, 0px);
+    left: 0;
+    width: 100%;
+    height: var(--visible-height, 100dvh);
+    min-height: 0;
     display: block;
     padding: 0;
     overflow: auto;
@@ -1141,9 +1152,8 @@ input:disabled {
 
   .quiz-shell {
     width: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
-    align-content: start;
+    min-height: 100%;
+    align-content: safe center;
     gap: 16px;
     padding: 24px 18px;
     border-radius: 0;
@@ -1151,8 +1161,7 @@ input:disabled {
   }
 
   .quiz-shell.is-playing {
-    min-height: 100vh;
-    min-height: 100dvh;
+    min-height: 100%;
     padding: 24px 18px;
   }
 
