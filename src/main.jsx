@@ -829,7 +829,8 @@ function App() {
         const active = document.activeElement;
         if (window.matchMedia('(max-width: 560px), (any-pointer: coarse)').matches && active instanceof HTMLInputElement) {
           const app = active.closest('.app');
-          if (!app) return;
+          // Landscape phones use native document scrolling and focus positioning.
+          if (!app || getComputedStyle(app).position !== 'fixed') return;
           const bounds = app.getBoundingClientRect();
           const inputBounds = active.getBoundingClientRect();
           // Scroll only the app, avoiding another document pan during keyboard animation.
@@ -1534,7 +1535,6 @@ function App() {
                     <button
                       type="submit"
                       disabled={Boolean(feedback)}
-                      onPointerDown={(event) => event.preventDefault()}
                     >
                       Check
                     </button>
@@ -1554,7 +1554,6 @@ function App() {
                     <button
                       ref={nextButtonRef}
                       type="button"
-                      onPointerDown={(event) => event.preventDefault()}
                       onClick={() => {
                         inputRef.current?.focus({ preventScroll: true });
                         goToNextCard(undefined, correctCount, feedback.results);

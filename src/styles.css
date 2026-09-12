@@ -1153,6 +1153,23 @@ input:disabled {
   }
 }
 
+/* Avoid a moving fixed scroller on short landscape touch screens. */
+@media (orientation: landscape) and (max-height: 560px) and (any-pointer: coarse) {
+  html,
+  body {
+    overflow: auto;
+  }
+
+  .app {
+    position: relative;
+    top: auto;
+    height: auto;
+    min-height: var(--visible-height, 100dvh);
+    overflow: visible;
+    align-items: start;
+  }
+}
+
 /* Fit tablet content to the space actually visible above the keyboard. */
 @media (min-width: 561px) and (any-pointer: coarse) {
   .app {
