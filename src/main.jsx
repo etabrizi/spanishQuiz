@@ -823,35 +823,18 @@ function App() {
         // Leave pinch zoom under the browser's control.
         if (viewport.scale !== 1) return;
         document.documentElement.style.setProperty('--visible-height', `${viewport.height}px`);
-        document.documentElement.style.setProperty('--visible-top', `${viewport.offsetTop}px`);
         // CSS height media queries do not follow the iOS keyboard's visual viewport.
         document.documentElement.classList.toggle('compact-viewport', viewport.height < 750);
-        const active = document.activeElement;
-        if (window.matchMedia('(max-width: 560px), (any-pointer: coarse)').matches && active instanceof HTMLInputElement) {
-          const app = active.closest('.app');
-          // Landscape phones use native document scrolling and focus positioning.
-          if (!app || getComputedStyle(app).position !== 'fixed') return;
-          const bounds = app.getBoundingClientRect();
-          const inputBounds = active.getBoundingClientRect();
-          // Scroll only the app, avoiding another document pan during keyboard animation.
-          const bottomOverflow = inputBounds.bottom - (bounds.bottom - 12);
-          const topOverflow = inputBounds.top - (bounds.top + 12);
-          if (bottomOverflow > 0) app.scrollTop += bottomOverflow;
-          else if (topOverflow < 0) app.scrollTop += topOverflow;
-        }
       });
     };
     updateViewport();
     viewport.addEventListener('resize', updateViewport);
-    viewport.addEventListener('scroll', updateViewport);
-    document.addEventListener('focusin', updateViewport);
+    window.addEventListener('resize', updateViewport);
     return () => {
       cancelAnimationFrame(frame);
       viewport.removeEventListener('resize', updateViewport);
-      viewport.removeEventListener('scroll', updateViewport);
-      document.removeEventListener('focusin', updateViewport);
+      window.removeEventListener('resize', updateViewport);
       document.documentElement.style.removeProperty('--visible-height');
-      document.documentElement.style.removeProperty('--visible-top');
       document.documentElement.classList.remove('compact-viewport');
     };
   }, []);

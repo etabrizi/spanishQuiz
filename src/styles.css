@@ -1135,37 +1135,18 @@ input:disabled {
 
 /* Include tablets, including iPads with a trackpad attached. */
 @media (max-width: 560px), (any-pointer: coarse) {
-  html,
-  body {
-    overflow: hidden;
-  }
-
+  /* Keep one native document scroller through keyboard and rotation changes.
+     Moving a fixed container can leave iOS touch targets at an old offset. */
   .app {
-    position: fixed;
-    top: var(--visible-top, 0px);
-    left: 0;
     width: 100%;
-    height: var(--visible-height, 100dvh);
-    min-height: 0;
+    min-height: var(--visible-height, 100dvh);
     align-items: safe center;
-    overflow: auto;
-    overscroll-behavior-y: contain;
+    overflow: visible;
   }
 }
 
-/* Avoid a moving fixed scroller on short landscape touch screens. */
 @media (orientation: landscape) and (max-height: 560px) and (any-pointer: coarse) {
-  html,
-  body {
-    overflow: auto;
-  }
-
   .app {
-    position: relative;
-    top: auto;
-    height: auto;
-    min-height: var(--visible-height, 100dvh);
-    overflow: visible;
     align-items: start;
   }
 }
@@ -1237,7 +1218,7 @@ input:disabled {
 
   .quiz-shell {
     width: 100%;
-    min-height: 100%;
+    min-height: var(--visible-height, 100dvh);
     align-content: start;
     gap: 16px;
     padding: 24px 18px;
@@ -1246,7 +1227,7 @@ input:disabled {
   }
 
   .quiz-shell.is-playing {
-    min-height: 100%;
+    min-height: var(--visible-height, 100dvh);
     padding: 24px 18px;
   }
 
