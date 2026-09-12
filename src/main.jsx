@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import { gsap } from 'gsap';
 import {
   CheckCircle2,
@@ -886,7 +887,7 @@ function App() {
   }, [cardIndex, currentCard, speechSupported, view]);
 
   useEffect(() => {
-    if (feedback?.type === 'wrong' || feedback?.type === 'missed') {
+    if (!inputRef.current && (feedback?.type === 'wrong' || feedback?.type === 'missed')) {
       nextButtonRef.current?.focus();
     }
   }, [feedback]);
@@ -962,6 +963,7 @@ function App() {
   }
 
   function finishRound(finalScore, finalCorrectCount, finalResults) {
+    inputRef.current?.blur();
     const nextEntry = {
       name: playerName.trim(),
       mode: quizModeRef.current,
@@ -1110,9 +1112,13 @@ function App() {
       return;
     }
 
-    setPlayerName(nextName);
-    resetRound(sourceCards);
-    setView(VIEW.QUIZ);
+    // Mount and focus within the Start gesture so iOS can open the keyboard.
+    flushSync(() => {
+      setPlayerName(nextName);
+      resetRound(sourceCards);
+      setView(VIEW.QUIZ);
+    });
+    inputRef.current?.focus({ preventScroll: true });
   }
 
   function goToNextCard(
@@ -1206,6 +1212,11 @@ function App() {
 
   function checkAnswer(event) {
     event.preventDefault();
+    inputRef.current?.focus({ preventScroll: true });
+    if (feedback && !isStreakMode(quizMode) && ['wrong', 'missed'].includes(feedback.type)) {
+      goToNextCard(undefined, correctCount, feedback.results);
+      return;
+    }
     submitAnswer(answer);
   }
 
@@ -1214,6 +1225,7 @@ function App() {
   }
 
   function restartGame() {
+    inputRef.current?.blur();
     resetRound(sourceCards);
     setPlayerName('');
     setNameDraft('');
@@ -1509,12 +1521,21 @@ function App() {
                       id="answer"
                       type="text"
                       value={answer}
-                      onChange={(event) => setAnswer(event.target.value)}
+                      onChange={(event) => {
+                        if (!feedback) setAnswer(event.target.value);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.nativeEvent.isComposing) checkAnswer(event);
+                      }}
                       placeholder="Type the English word"
                       autoComplete="off"
-                      disabled={Boolean(feedback)}
+                      aria-disabled={Boolean(feedback)}
                     />
-                    <button type="submit" disabled={Boolean(feedback)}>
+                    <button
+                      type="submit"
+                      disabled={Boolean(feedback)}
+                      onPointerDown={(event) => event.preventDefault()}
+                    >
                       Check
                     </button>
                   </div>
@@ -1533,7 +1554,11 @@ function App() {
                     <button
                       ref={nextButtonRef}
                       type="button"
-                      onClick={() => goToNextCard(undefined, correctCount, feedback.results)}
+                      onPointerDown={(event) => event.preventDefault()}
+                      onClick={() => {
+                        inputRef.current?.focus({ preventScroll: true });
+                        goToNextCard(undefined, correctCount, feedback.results);
+                      }}
                     >
                       Next
                     </button>
