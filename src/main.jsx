@@ -766,7 +766,6 @@ function App() {
   const [bestTranslator, setBestTranslator] = useState(() => loadBestTranslator());
   const shellRef = useRef(null);
   const inputRef = useRef(null);
-  const playerNameInputRef = useRef(null);
   const nextButtonRef = useRef(null);
   const dataFileInputRef = useRef(null);
   const answerRef = useRef('');
@@ -808,15 +807,39 @@ function App() {
 
   useEffect(() => {
     if (view === VIEW.QUIZ) {
-      inputRef.current?.focus();
+      inputRef.current?.focus({ preventScroll: true });
     }
   }, [cardIndex, view]);
 
   useEffect(() => {
-    if (view === VIEW.HOME) {
-      playerNameInputRef.current?.focus();
-    }
-  }, [view]);
+    const viewport = window.visualViewport;
+    if (!viewport) return undefined;
+
+    let frame;
+    const updateViewport = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        // Leave pinch zoom under the browser's control.
+        if (viewport.scale !== 1) return;
+        document.documentElement.style.setProperty('--visible-height', `${viewport.height}px`);
+        document.documentElement.style.setProperty('--visible-top', `${viewport.offsetTop}px`);
+        const active = document.activeElement;
+        if (window.matchMedia('(max-width: 560px)').matches && active instanceof HTMLInputElement) {
+          active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+        }
+      });
+    };
+    updateViewport();
+    viewport.addEventListener('resize', updateViewport);
+    viewport.addEventListener('scroll', updateViewport);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', updateViewport);
+      viewport.removeEventListener('scroll', updateViewport);
+      document.documentElement.style.removeProperty('--visible-height');
+      document.documentElement.style.removeProperty('--visible-top');
+    };
+  }, []);
 
   useEffect(() => {
     if (!canSpeak()) {
@@ -1375,7 +1398,6 @@ function App() {
               <label htmlFor="player-name">Player name</label>
               <div className="answer-row">
                 <input
-                  ref={playerNameInputRef}
                   id="player-name"
                   type="text"
                   value={nameDraft}
