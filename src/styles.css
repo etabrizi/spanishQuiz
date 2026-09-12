@@ -1151,6 +1151,24 @@ input:disabled {
   }
 }
 
+/* Both dimensions must be tablet-sized: a landscape iPhone is also wide. */
+@media (min-width: 600px) and (min-height: 600px) and (any-pointer: coarse) {
+  html,
+  body {
+    overflow: hidden;
+  }
+
+  .app {
+    position: fixed;
+    top: var(--visible-top, 0px);
+    left: 0;
+    height: var(--visible-height, 100dvh);
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
 /* Fit tablet content to the space actually visible above the keyboard. */
 @media (min-width: 561px) and (any-pointer: coarse) {
   .app {
