@@ -297,6 +297,10 @@ function getQuestionPoints(matchType, secondsLeft) {
 }
 
 function compareLeaderboardEntries(first, second) {
+  if (second.score !== first.score) {
+    return second.score - first.score;
+  }
+
   const firstCorrect = Number.isFinite(first.correct) ? first.correct : 0;
   const secondCorrect = Number.isFinite(second.correct) ? second.correct : 0;
   const firstTotal = Number.isFinite(first.total) && first.total > 0 ? first.total : 1;
