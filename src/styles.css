@@ -1306,3 +1306,40 @@ input:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.loading-screen {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.loading-screen h2,
+.loading-screen p {
+  margin: 0;
+}
+
+.loading-screen p {
+  color: var(--muted);
+}
+
+.loading-spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid var(--canvas);
+  border-top-color: var(--green);
+  border-radius: 50%;
+  animation: loading-spin 0.8s linear infinite;
+}
+
+@keyframes loading-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner { animation: none; }
+}

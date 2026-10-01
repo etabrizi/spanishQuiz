@@ -38,6 +38,7 @@ const BEST_STREAKER_STORAGE_KEY = 'spanish-quiz-best-streaker';
 const BEST_TRANSLATOR_STORAGE_KEY = 'spanish-quiz-best-translator';
 const VIEW = {
   HOME: 'home',
+  LOADING: 'loading',
   QUIZ: 'quiz',
   QUESTIONS: 'questions',
   REVIEW: 'review',
@@ -566,18 +567,18 @@ function getPrimarySourceCards(baseCards, customCards) {
   return mergeCardsByQuestion([...baseCards, ...customCards]);
 }
 
-function getTranslatePromptCards(sourceCards, difficultKeys) {
+function* generateTranslatePromptCards(sourceCards, difficultKeys) {
   const sentenceBank = getTranslateSentenceBank(sourceCards);
 
   if (sentenceBank.length < 3) {
     return [];
   }
 
-  return prioritiseDifficultCards(sentenceBank, difficultKeys).map((sentence) => {
+  for (const sentence of prioritiseDifficultCards(sentenceBank, difficultKeys)) {
     const correctAnswer = getCardAnswer(sentence);
     const wrongAnswers = [];
 
-    shuffleCards(sentenceBank).forEach((candidateSentence) => {
+    for (const candidateSentence of shuffleCards(sentenceBank)) {
       const candidateAnswer = getCardAnswer(candidateSentence);
 
       if (
@@ -587,18 +588,19 @@ function getTranslatePromptCards(sourceCards, difficultKeys) {
       ) {
         wrongAnswers.push(candidateAnswer);
       }
-    });
+      if (wrongAnswers.length === 2) break;
+    }
 
-    return {
+    yield {
       ...sentence,
       options: shuffleCards([correctAnswer, ...wrongAnswers])
     };
-  });
+  }
 }
 
 function getModeCards(sourceCards, quizMode, difficultKeys) {
   if (quizMode === QUIZ_MODE.TRANSLATE) {
-    return getTranslatePromptCards(sourceCards, difficultKeys);
+    return [...generateTranslatePromptCards(sourceCards, difficultKeys)];
   }
 
   return quizMode === QUIZ_MODE.STREAK
@@ -742,6 +744,8 @@ function App() {
   }
 
   const [view, setView] = useState(VIEW.HOME);
+  const [questionsLoading, setQuestionsLoading] = useState(true);
+  const startingRef = useRef(false);
   const [baseCards, setBaseCards] = useState(FALLBACK_CARDS);
   const [customCards, setCustomCards] = useState(() => loadStoredCards(CUSTOM_CARDS_STORAGE_KEY));
   const [removedBaseCardKeys, setRemovedBaseCardKeys] = useState(() =>
@@ -791,7 +795,7 @@ function App() {
   );
   const duplicateQuestionCount = Math.max(0, visibleBaseCards.length + customCards.length - sourceCards.length);
   const translateSentenceCount = useMemo(() => getTranslateSentenceBank(sourceCards).length, [sourceCards]);
-  const canStartQuiz = quizMode === QUIZ_MODE.TRANSLATE ? translateSentenceCount >= 3 : sourceCards.length > 0;
+  const canStartQuiz = !questionsLoading && (quizMode === QUIZ_MODE.TRANSLATE ? translateSentenceCount >= 3 : sourceCards.length > 0);
 
   useLayoutEffect(() => {
     if (!shellRef.current) {
@@ -914,9 +918,9 @@ function App() {
     bestStreakRef.current = bestStreak;
   }, [bestStreak]);
 
-  function resetRound(nextSourceCards = sourceCards) {
+  function resetRound(nextSourceCards = sourceCards, preparedCards) {
     setSourceCards(nextSourceCards);
-    setCards(getModeCards(nextSourceCards, quizModeRef.current, difficultKeysRef.current));
+    setCards(preparedCards ?? getModeCards(nextSourceCards, quizModeRef.current, difficultKeysRef.current));
     setCardIndex(0);
     setAnswer('');
     setScore(0);
@@ -1061,6 +1065,8 @@ function App() {
             ? `${nextSourceCards.length} unique questions loaded.`
             : `${nextSourceCards.length} starter questions loaded.`
         );
+      } finally {
+        setQuestionsLoading(false);
       }
     }
 
@@ -1109,12 +1115,36 @@ function App() {
     return () => window.clearInterval(timerId);
   }, [currentCard, feedback, view]);
 
-  function savePlayer(event) {
+  async function savePlayer(event) {
     event.preventDefault();
 
     const nextName = nameDraft.trim();
 
-    if (!nextName || !canStartQuiz) {
+    if (!nextName || !canStartQuiz || startingRef.current) {
+      return;
+    }
+
+    if (quizMode === QUIZ_MODE.TRANSLATE) {
+      startingRef.current = true;
+      setPlayerName(nextName);
+      setView(VIEW.LOADING);
+      try {
+        // Give the loading screen a paint before preparing the full deck.
+        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const preparedCards = [];
+        for (const card of generateTranslatePromptCards(sourceCards, difficultKeysRef.current)) {
+          preparedCards.push(card);
+          if (preparedCards.length % 25 === 0) {
+            await new Promise((resolve) => window.setTimeout(resolve, 0));
+          }
+        }
+        resetRound(sourceCards, preparedCards);
+        // Drain clicks queued during preparation while answers are still hidden.
+        await new Promise((resolve) => window.setTimeout(resolve, 300));
+        setView(VIEW.QUIZ);
+      } finally {
+        startingRef.current = false;
+      }
       return;
     }
 
@@ -1146,7 +1176,7 @@ function App() {
   }
 
   function submitAnswer(userAnswer) {
-    if (!userAnswer.trim() || feedback) {
+    if (view !== VIEW.QUIZ || startingRef.current || !userAnswer.trim() || feedback) {
       return;
     }
 
@@ -1351,7 +1381,7 @@ function App() {
           </button>
         )}
 
-        {view !== VIEW.QUIZ && (
+        {view !== VIEW.QUIZ && view !== VIEW.LOADING && (
           <header className="top-bar">
             <div>
               <span className="brand-kicker">Practice a little every day</span>
@@ -1364,7 +1394,7 @@ function App() {
           </header>
         )}
 
-        {view !== VIEW.QUIZ && (
+        {view !== VIEW.QUIZ && view !== VIEW.LOADING && (
           <nav className="screen-nav" aria-label="Quiz screens">
             <button className={view === VIEW.HOME ? 'active' : ''} type="button" onClick={() => setView(VIEW.HOME)}>
               <User size={18} />
@@ -1387,6 +1417,14 @@ function App() {
               Scores
             </button>
           </nav>
+        )}
+
+        {view === VIEW.LOADING && (
+          <div className="loading-screen" role="status" aria-live="polite" aria-busy="true">
+            <span className="loading-spinner" aria-hidden="true" />
+            <h2>Getting your questions ready…</h2>
+            <p>Your game will start automatically.</p>
+          </div>
         )}
 
         {view === VIEW.HOME && (
@@ -1438,10 +1476,10 @@ function App() {
                 />
                 <button type="submit" disabled={!canStartQuiz}>
                   <Play size={18} />
-                  Start quiz
+                  {questionsLoading ? 'Loading questions…' : 'Start quiz'}
                 </button>
               </div>
-              {quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
+              {!questionsLoading && quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
                 <p className="mode-note">Add more nouns, verbs, or time words in Manage to unlock Translate mode.</p>
               )}
             </form>
