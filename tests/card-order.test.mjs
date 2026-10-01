@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { orderPracticeCards } from '../src/card-order.mjs';
+import { orderPracticeCards, orderTranslateCards } from '../src/card-order.mjs';
 
 const key = (card) => card.question;
 const cards = Array.from({ length: 30 }, (_, index) => ({ question: `card-${index}` }));
@@ -40,5 +40,32 @@ test('empty and small decks work with absent or stale flags', () => {
     const ordered = orderPracticeCards(deck, ['card-0', 'deleted'], key, seededRandom(7));
     assert.deepEqual(new Set(ordered), new Set(deck));
     assert.equal(ordered.length, deck.length);
+  }
+});
+
+const short = Array.from({ length: 30 }, (_, i) => ({ question: `Quiero aprender${i}.` }));
+const medium = Array.from({ length: 30 }, (_, i) => ({ question: `Voy a aprender${i} ahora.` }));
+const long = Array.from({ length: 30 }, (_, i) => ({ question: `Quiero aprender${i}, pero no tengo tiempo.` }));
+
+test('Translate increases length on questions 11 and 21 and stays long thereafter', () => {
+  const deck = [...short, ...medium, ...long];
+  const original = [...deck];
+  const ordered = orderTranslateCards(deck, [key(long[0]), key(medium[0]), key(short[0])], key, seededRandom(42));
+  assert.equal(ordered.length, 50);
+  assert.ok(ordered.slice(0, 10).every((card) => short.includes(card)));
+  assert.ok(ordered.slice(10, 20).every((card) => medium.includes(card)));
+  assert.ok(ordered.slice(20).every((card) => long.includes(card)));
+  assert.ok(ordered.slice(0, 10).includes(short[0]));
+  assert.ok(ordered.slice(10, 20).includes(medium[0]));
+  assert.ok(ordered.slice(20, 30).includes(long[0]));
+  assert.equal(new Set(ordered).size, ordered.length);
+  assert.deepEqual(deck, original);
+});
+
+test('Translate supports small or edited decks with missing length tiers', () => {
+  for (const deck of [[], short.slice(0, 2), medium, long, [...short.slice(0, 2), ...long.slice(0, 3)]]) {
+    const ordered = orderTranslateCards(deck, ['deleted'], key, seededRandom(7));
+    assert.equal(new Set(ordered).size, ordered.length);
+    assert.deepEqual(new Set(ordered), new Set(deck));
   }
 });

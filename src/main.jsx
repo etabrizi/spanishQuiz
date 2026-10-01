@@ -22,8 +22,10 @@ import {
   XCircle
 } from 'lucide-react';
 import './styles.css';
+import { getLongTranslations } from './long-translations.mjs';
+import { buildTranslationOptions } from './translation-options.mjs';
 import OfflineStatus from './OfflineStatus';
-import { shuffleCards, orderPracticeCards } from './card-order.mjs';
+import { shuffleCards, orderPracticeCards, orderTranslateCards } from './card-order.mjs';
 
 const FALLBACK_CARDS = [{ question: 'hola', answers: ['hello'] }];
 
@@ -554,6 +556,9 @@ function getTranslateSentenceBank(sourceCards) {
     }
   });
 
+  getLongTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))
+    .forEach((card) => addSentence(card.question, card.answers[0]));
+
   return sentences;
 }
 
@@ -574,26 +579,11 @@ function* generateTranslatePromptCards(sourceCards, difficultKeys) {
     return [];
   }
 
-  for (const sentence of prioritiseDifficultCards(sentenceBank, difficultKeys)) {
-    const correctAnswer = getCardAnswer(sentence);
-    const wrongAnswers = [];
-
-    for (const candidateSentence of shuffleCards(sentenceBank)) {
-      const candidateAnswer = getCardAnswer(candidateSentence);
-
-      if (
-        wrongAnswers.length < 2 &&
-        normalizeAnswer(candidateAnswer) !== normalizeAnswer(correctAnswer) &&
-        !wrongAnswers.some((wrongAnswer) => normalizeAnswer(wrongAnswer) === normalizeAnswer(candidateAnswer))
-      ) {
-        wrongAnswers.push(candidateAnswer);
-      }
-      if (wrongAnswers.length === 2) break;
-    }
-
+  const answerBank = sentenceBank.map(getCardAnswer);
+  for (const sentence of orderTranslateCards(sentenceBank, difficultKeys, getQuestionKey)) {
     yield {
       ...sentence,
-      options: shuffleCards([correctAnswer, ...wrongAnswers])
+      options: buildTranslationOptions(getCardAnswers(sentence), answerBank)
     };
   }
 }

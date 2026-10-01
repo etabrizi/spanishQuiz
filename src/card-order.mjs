@@ -21,3 +21,29 @@ export function orderPracticeCards(cards, difficultKeys, getQuestionKey, random 
   early.push(...regular.splice(0, 10 - early.length));
   return [...shuffleCards(early, random), ...flagged, ...regular];
 }
+
+// Increase sentence length after each ten correct answers. A wrong answer ends
+// Translate mode, so deck position also represents the player's streak.
+export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random = Math.random) {
+  const tiers = [[], [], []];
+  for (const card of cards) {
+    const words = card.question.trim().split(/\s+/).length;
+    tiers[words <= 3 ? 0 : words <= 5 ? 1 : 2].push(card);
+  }
+  const pools = tiers.map((tier) => orderPracticeCards(tier, difficultKeys, getQuestionKey, random));
+  const ordered = [];
+  for (let tier = 0; tier < pools.length; tier += 1) {
+    // Edited decks may lack a tier. Use the closest available length without
+    // duplicating questions, preferring a harder tier when possible.
+    const candidates = [tier, ...[0, 1, 2].filter((index) => index > tier),
+      ...[2, 1, 0].filter((index) => index < tier)];
+    let remaining = tier === 2 ? Infinity : 10;
+    for (const index of candidates) {
+      const selected = pools[index].splice(0, remaining);
+      ordered.push(...selected);
+      remaining -= selected.length;
+      if (remaining === 0 || (tier === 2 && selected.length)) break;
+    }
+  }
+  return ordered;
+}
