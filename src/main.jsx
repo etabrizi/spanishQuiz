@@ -764,6 +764,7 @@ function App() {
   const [bestStreaker, setBestStreaker] = useState(() => loadBestStreaker());
   const [bestTranslator, setBestTranslator] = useState(() => loadBestTranslator());
   const shellRef = useRef(null);
+  const loadingSpinnerRef = useRef(null);
   const inputRef = useRef(null);
   const nextButtonRef = useRef(null);
   const dataFileInputRef = useRef(null);
@@ -802,6 +803,22 @@ function App() {
     });
 
     return undefined;
+  }, [view]);
+
+  useLayoutEffect(() => {
+    if (view !== VIEW.LOADING) return undefined;
+
+    const motion = gsap.matchMedia();
+    motion.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.to(loadingSpinnerRef.current, {
+        rotation: 360,
+        duration: 0.8,
+        repeat: -1,
+        ease: 'none'
+      });
+    });
+
+    return () => motion.revert();
   }, [view]);
 
   useEffect(() => {
@@ -1411,7 +1428,7 @@ function App() {
 
         {view === VIEW.LOADING && (
           <div className="loading-screen" role="status" aria-live="polite" aria-busy="true">
-            <span className="loading-spinner" aria-hidden="true" />
+            <span ref={loadingSpinnerRef} className="loading-spinner" aria-hidden="true" />
             <h2>Getting your questions ready…</h2>
             <p>Your game will start automatically.</p>
           </div>

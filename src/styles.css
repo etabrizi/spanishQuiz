@@ -1249,6 +1249,14 @@ input:disabled {
     padding: 24px 18px;
   }
 
+  .quiz-shell.view-loading {
+    /* Keep the loader full-height while the name keyboard closes. */
+    min-height: 100vh;
+    min-height: 100dvh;
+    align-content: stretch;
+    grid-template-rows: 1fr;
+  }
+
   .top-bar {
     align-items: flex-start;
   }
@@ -1333,13 +1341,4 @@ input:disabled {
   border: 4px solid var(--canvas);
   border-top-color: var(--green);
   border-radius: 50%;
-  animation: loading-spin 0.8s linear infinite;
-}
-
-@keyframes loading-spin {
-  to { transform: rotate(360deg); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loading-spinner { animation: none; }
 }
