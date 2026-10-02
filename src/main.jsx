@@ -1212,7 +1212,11 @@ function App() {
     }
 
     setAnswer('');
-    setSecondsLeft(ROUND_SECONDS);
+    const nextCardIndex = cardIndex + 1;
+    const extraSeconds = quizMode === QUIZ_MODE.TRANSLATE
+      ? Math.min(Math.floor(nextCardIndex / 10), 2) * 5
+      : 0;
+    setSecondsLeft(ROUND_SECONDS + extraSeconds);
     setFeedback(null);
     setCardIndex((current) => current + 1);
   }
@@ -1521,6 +1525,9 @@ function App() {
                   {questionsLoading ? 'Loading questions…' : 'Start quiz'}
                 </button>
               </div>
+              {quizMode === QUIZ_MODE.TRANSLATE && (
+                <p className="mode-note">10 seconds per question, rising to 15 after question 10 and 20 after question 20.</p>
+              )}
               {!questionsLoading && quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
                 <p className="mode-note">Add more nouns, verbs, or time words in Manage to unlock Translate mode.</p>
               )}
