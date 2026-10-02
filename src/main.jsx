@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { getLongTranslations } from './long-translations.mjs';
-import { buildTranslationOptions } from './translation-options.mjs';
 import OfflineStatus from './OfflineStatus';
 import { shuffleCards, orderPracticeCards, orderTranslateCards } from './card-order.mjs';
 
@@ -600,25 +599,11 @@ function getPrimarySourceCards(baseCards, customCards) {
   return mergeCardsByQuestion([...baseCards, ...customCards]);
 }
 
-function* generateTranslatePromptCards(sourceCards, difficultKeys) {
-  const sentenceBank = getTranslateSentenceBank(sourceCards);
-
-  if (sentenceBank.length < 3) {
-    return [];
-  }
-
-  const answerBank = sentenceBank.map(getCardAnswer);
-  for (const sentence of orderTranslateCards(sentenceBank, difficultKeys, getQuestionKey)) {
-    yield {
-      ...sentence,
-      options: buildTranslationOptions(getCardAnswers(sentence), answerBank)
-    };
-  }
-}
-
 function getModeCards(sourceCards, quizMode, difficultKeys) {
   if (quizMode === QUIZ_MODE.TRANSLATE) {
-    return [...generateTranslatePromptCards(sourceCards, difficultKeys)];
+    // Translate decks are prepared by the worker when Start is pressed.
+    // Resets (including finishing a round) only need to clear the old deck.
+    return [];
   }
 
   return quizMode === QUIZ_MODE.STREAK
