@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { getLongTranslations } from './long-translations.mjs';
+import { isStandaloneAction, canUseNoun, DESTINATIONS } from './translation-rules.mjs';
 import OfflineStatus from './OfflineStatus';
 import { shuffleCards, orderPracticeCards, orderTranslateCards } from './card-order.mjs';
 
@@ -406,14 +407,14 @@ function getTranslateSentenceBank(sourceCards) {
   const periods = nouns.filter((entry) =>
     ['dia', 'noche', 'semana', 'ano'].includes(normalizePhraseKey(getCardQuestion(entry.card)))
   );
-  const timeWords = getCardsByAnswers(sourceCards, ['today', 'tomorrow', 'now', 'after', 'always']).map((card) => ({
+  const timeWords = getCardsByAnswers(sourceCards, ['today', 'tomorrow', 'now', 'after']).map((card) => ({
     card,
     spanish: getCardQuestion(card),
     english: normalizePhraseKey(getCardQuestion(card)) === 'despues' ? 'later' : getPrimaryAnswer(card)
   }));
   const infinitives = getCardsByAnswerPrefix(sourceCards, 'to ');
   const actionInfinitives = infinitives.filter(
-    (verb) => !['ser', 'estar', 'tener', 'querer', 'poder', 'saber', 'gustar'].includes(normalizePhraseKey(getCardQuestion(verb)))
+    (verb) => isStandaloneAction(normalizePhraseKey(getCardQuestion(verb)))
   );
   const sentences = [];
 
@@ -445,31 +446,33 @@ function getTranslateSentenceBank(sourceCards) {
   const para = getCardByQuestion(sourceCards, 'para');
   const ahora = getCardByQuestion(sourceCards, 'ahora');
 
-  nouns.forEach(({ phrase }) => {
-    if (tengo) {
+  nouns.forEach(({ card, phrase }) => {
+    const noun = normalizePhraseKey(getCardQuestion(card));
+    if (tengo && canUseNoun('tengo', noun)) {
       addSentence(`${getCardQuestion(tengo)} ${phrase.indefinite}.`, `I have ${phrase.englishIndefinite}.`);
     }
 
-    if (quiero) {
+    if (quiero && canUseNoun('quiero', noun)) {
       addSentence(`${getCardQuestion(quiero)} ${phrase.definite}.`, `I want ${phrase.englishDefinite}.`);
     }
 
-    if (necesito) {
+    if (necesito && canUseNoun('necesito', noun)) {
       addSentence(`${getCardQuestion(necesito)} ${phrase.definite}.`, `I need ${phrase.englishDefinite}.`);
     }
   });
 
-  places.forEach(({ phrase }) => {
+  places.forEach(({ card }) => {
+    const destination = DESTINATIONS[normalizePhraseKey(getCardQuestion(card))];
     if (ir) {
-      addSentence(`Voy a ${phrase.definite}.`, `I am going to ${phrase.englishDefinite}.`);
+      addSentence(`Voy ${destination.spanish}.`, `I am going ${destination.english}.`);
     }
 
     if (quiero) {
-      addSentence(`${getCardQuestion(quiero)} ir a ${phrase.definite}.`, `I want to go to ${phrase.englishDefinite}.`);
+      addSentence(`${getCardQuestion(quiero)} ir ${destination.spanish}.`, `I want to go ${destination.english}.`);
     }
 
     if (necesito) {
-      addSentence(`${getCardQuestion(necesito)} ir a ${phrase.definite}.`, `I need to go to ${phrase.englishDefinite}.`);
+      addSentence(`${getCardQuestion(necesito)} ir ${destination.spanish}.`, `I need to go ${destination.english}.`);
     }
   });
 
@@ -491,11 +494,11 @@ function getTranslateSentenceBank(sourceCards) {
     }
 
     if (puedes) {
-      addSentence(`${stripQuestionPunctuation(getCardQuestion(puedes))} ${spanishVerb}?`, `Can you ${englishVerb}?`);
+      addSentence(`¿${stripQuestionPunctuation(getCardQuestion(puedes))} ${spanishVerb}?`, `Can you ${englishVerb}?`);
     }
 
     if (vasA) {
-      addSentence(`${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb}?`, `Are you going to ${englishVerb}?`);
+      addSentence(`¿${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb}?`, `Are you going to ${englishVerb}?`);
     }
 
     if (ir && ahora) {
@@ -503,7 +506,7 @@ function getTranslateSentenceBank(sourceCards) {
     }
 
     if (verbForm) {
-      addSentence(`${verbForm.yo}${ahora ? ` ${getCardQuestion(ahora)}` : ''}.`, `I ${verbForm.english}${ahora ? ' now' : ''}.`);
+      addSentence(`${verbForm.yo}.`, `I ${verbForm.english}.`);
     }
 
     timeWords.forEach((timeWord) => {
@@ -512,7 +515,7 @@ function getTranslateSentenceBank(sourceCards) {
       }
 
       if (vasA) {
-        addSentence(`${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb} ${timeWord.spanish}?`, `Will you ${englishVerb} ${timeWord.english}?`);
+        addSentence(`¿${stripQuestionPunctuation(getCardQuestion(vasA))} ${spanishVerb} ${timeWord.spanish}?`, `Will you ${englishVerb} ${timeWord.english}?`);
       }
     });
   });
@@ -547,11 +550,11 @@ function getTranslateSentenceBank(sourceCards) {
 
   timeWords.forEach((timeWord) => {
     if (queHaces) {
-      addSentence(`${getCardQuestion(queHaces)} ${timeWord.spanish}?`, `What are you doing ${timeWord.english}?`);
+      addSentence(`¿${stripQuestionPunctuation(getCardQuestion(queHaces))} ${timeWord.spanish}?`, `What are you doing ${timeWord.english}?`);
     }
 
     if (queQuieres) {
-      addSentence(`${getCardQuestion(queQuieres)} ${timeWord.spanish}?`, `What do you want ${timeWord.english}?`);
+      addSentence(`¿${stripQuestionPunctuation(getCardQuestion(queQuieres))} ${timeWord.spanish}?`, `What do you want ${timeWord.english}?`);
     }
   });
 
@@ -561,10 +564,11 @@ function getTranslateSentenceBank(sourceCards) {
   ];
 
   pluralSubjects.forEach((subject) => {
-    nouns.forEach(({ phrase }) => {
-      if (tengo) addSentence(`${subject.spanish} ${subject.have} ${phrase.indefinite}.`, `${subject.english} have ${phrase.englishIndefinite}.`);
-      if (quiero) addSentence(`${subject.spanish} ${subject.want} ${phrase.definite}.`, `${subject.english} want ${phrase.englishDefinite}.`);
-      if (necesito) addSentence(`${subject.spanish} ${subject.need} ${phrase.definite}.`, `${subject.english} need ${phrase.englishDefinite}.`);
+    nouns.forEach(({ card, phrase }) => {
+      const noun = normalizePhraseKey(getCardQuestion(card));
+      if (tengo && canUseNoun('tengo', noun)) addSentence(`${subject.spanish} ${subject.have} ${phrase.indefinite}.`, `${subject.english} have ${phrase.englishIndefinite}.`);
+      if (quiero && canUseNoun('quiero', noun)) addSentence(`${subject.spanish} ${subject.want} ${phrase.definite}.`, `${subject.english} want ${phrase.englishDefinite}.`);
+      if (necesito && canUseNoun('necesito', noun)) addSentence(`${subject.spanish} ${subject.need} ${phrase.definite}.`, `${subject.english} need ${phrase.englishDefinite}.`);
     });
 
     actionInfinitives.forEach((verb) => {
