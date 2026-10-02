@@ -650,6 +650,17 @@ function getSpanishVoice() {
     .sort((first, second) => second.score - first.score)[0]?.voice ?? null;
 }
 
+function initialiseSpeech() {
+  if (!canSpeak()) return;
+
+  // iOS unlocks speech only when speak() runs inside a user gesture.
+  // Do this before loading awaits or React effects lose the Start tap.
+  const utterance = new SpeechSynthesisUtterance('');
+  utterance.lang = 'es-ES';
+  utterance.volume = 0;
+  window.speechSynthesis.speak(utterance);
+}
+
 function speakSpanish(text) {
   if (!canSpeak()) {
     return;
@@ -1130,6 +1141,8 @@ function App() {
     if (!nextName || !canStartQuiz || startingRef.current) {
       return;
     }
+
+    initialiseSpeech();
 
     if (quizMode === QUIZ_MODE.TRANSLATE) {
       startingRef.current = true;
