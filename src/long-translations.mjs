@@ -1,6 +1,18 @@
 // Complete sentence pairs keep longer questions natural instead of padding
 // every short phrase with the same ending. Required words respect edited decks.
 const LONG_TRANSLATIONS = [
+  ['Nosotros queremos aprender a cocinar en casa.', 'We want to learn to cook at home.', ['aprender', 'cocinar', 'casa']],
+  ['Ellas quieren comprar comida antes de volver a casa.', 'They want to buy food before going home.', ['comprar', 'comida', 'casa']],
+  ['Nosotros podemos ayudar a limpiar la habitación.', 'We can help clean the room.', ['ayudar', 'limpiar', 'habitación']],
+  ['Ellos necesitan salir temprano para llegar al aeropuerto.', 'They need to leave early to get to the airport.', ['salir', 'temprano', 'aeropuerto']],
+  ['Nosotras vamos a escuchar música después del trabajo.', 'We are going to listen to music after work.', ['escuchar', 'música', 'trabajo']],
+  ['Ellos tienen que terminar el trabajo antes de dormir.', 'They have to finish the work before sleeping.', ['terminar', 'trabajo', 'dormir']],
+  ['Queremos hablar con ellos después del trabajo.', 'We want to talk with them after work.', ['querer', 'hablar', 'trabajo']],
+  ['Ellas quieren comer con nosotros esta noche.', 'They want to eat with us tonight.', ['querer', 'comer', 'noche']],
+  ['Tenemos que llevarles comida antes de salir.', 'We have to take them food before leaving.', ['tener', 'llevar', 'comida', 'salir']],
+  ['Ellos nos ayudan a encontrar el hotel.', 'They help us find the hotel.', ['ayudar', 'encontrar', 'hotel']],
+  ['Nosotras queremos ir con ellas a la playa.', 'We want to go with them to the beach.', ['querer', 'ir', 'playa']],
+  ['Ellos van a esperar delante del restaurante.', 'They are going to wait in front of the restaurant.', ['ir', 'esperar', 'restaurante']],
   ['Quiero comer con mi familia esta noche.', 'I want to eat with my family tonight.', ['comer', 'familia', 'noche']],
   ['Necesito comprar comida antes de volver a casa.', 'I need to buy food before going home.', ['comprar', 'comida', 'casa']],
   ['¿Puedes abrir la ventana antes de salir?', 'Can you open the window before leaving?', ['abrir', 'ventana', 'salir']],

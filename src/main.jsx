@@ -556,6 +556,34 @@ function getTranslateSentenceBank(sourceCards) {
     }
   });
 
+  const pluralSubjects = [
+    { spanish: 'Nosotros', english: 'We', have: 'tenemos', want: 'queremos', need: 'necesitamos', can: 'podemos', go: 'vamos' },
+    { spanish: 'Ellos', english: 'They', have: 'tienen', want: 'quieren', need: 'necesitan', can: 'pueden', go: 'van' }
+  ];
+
+  pluralSubjects.forEach((subject) => {
+    nouns.forEach(({ phrase }) => {
+      if (tengo) addSentence(`${subject.spanish} ${subject.have} ${phrase.indefinite}.`, `${subject.english} have ${phrase.englishIndefinite}.`);
+      if (quiero) addSentence(`${subject.spanish} ${subject.want} ${phrase.definite}.`, `${subject.english} want ${phrase.englishDefinite}.`);
+      if (necesito) addSentence(`${subject.spanish} ${subject.need} ${phrase.definite}.`, `${subject.english} need ${phrase.englishDefinite}.`);
+    });
+
+    actionInfinitives.forEach((verb) => {
+      const infinitive = getCardQuestion(verb);
+      // Reflexive infinitives need to agree with the plural subject too.
+      const spanishVerb = subject.english === 'We' ? infinitive.replace(/se$/, 'nos') : infinitive;
+      const englishVerb = getPrimaryAnswer(verb).replace(/^to /i, '');
+      if (quiero) addSentence(`${subject.want} ${spanishVerb}.`, `${subject.english} want to ${englishVerb}.`);
+      if (necesito) addSentence(`${subject.need} ${spanishVerb}.`, `${subject.english} need to ${englishVerb}.`);
+      if (puedo) addSentence(`${subject.can} ${spanishVerb}.`, `${subject.english} can ${englishVerb}.`);
+      if (tengo) addSentence(`${subject.have} que ${spanishVerb}.`, `${subject.english} have to ${englishVerb}.`);
+      timeWords.forEach((timeWord) => {
+        if (ir) addSentence(`${subject.spanish} ${subject.go} a ${spanishVerb} ${timeWord.spanish}.`, `${subject.english} are going to ${englishVerb} ${timeWord.english}.`);
+        if (puedo) addSentence(`${subject.spanish} ${subject.can} ${spanishVerb} ${timeWord.spanish}.`, `${subject.english} can ${englishVerb} ${timeWord.english}.`);
+      });
+    });
+  });
+
   getLongTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))
     .forEach((card) => addSentence(card.question, card.answers[0]));
 
@@ -796,7 +824,8 @@ function App() {
     [leaderboard]
   );
   const duplicateQuestionCount = Math.max(0, visibleBaseCards.length + customCards.length - sourceCards.length);
-  const translateSentenceCount = useMemo(() => getTranslateSentenceBank(sourceCards).length, [sourceCards]);
+  const translateSentenceBank = useMemo(() => getTranslateSentenceBank(sourceCards), [sourceCards]);
+  const translateSentenceCount = translateSentenceBank.length;
   const canStartQuiz = !questionsLoading && (quizMode === QUIZ_MODE.TRANSLATE ? translateSentenceCount >= 3 : sourceCards.length > 0);
 
   useLayoutEffect(() => {
@@ -1149,19 +1178,27 @@ function App() {
       setPlayerName(nextName);
       setView(VIEW.LOADING);
       try {
-        // Give the loading screen a paint before preparing the full deck.
-        await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-        const preparedCards = [];
-        for (const card of generateTranslatePromptCards(sourceCards, difficultKeysRef.current)) {
-          preparedCards.push(card);
-          if (preparedCards.length % 25 === 0) {
-            await new Promise((resolve) => window.setTimeout(resolve, 0));
-          }
-        }
+        // Answer generation must not block GSAP or touch events on phones.
+        const preparedCards = await new Promise((resolve, reject) => {
+          const worker = new Worker(new URL('./prepare-translate.worker.mjs', import.meta.url), { type: 'module' });
+          worker.onmessage = ({ data }) => {
+            worker.terminate();
+            if (data.error) reject(new Error(data.error));
+            else resolve(data.cards);
+          };
+          worker.onerror = () => {
+            worker.terminate();
+            reject(new Error('Question preparation failed'));
+          };
+          worker.postMessage(orderTranslateCards(translateSentenceBank, difficultKeysRef.current, getQuestionKey));
+        });
         resetRound(sourceCards, preparedCards);
         // Drain clicks queued during preparation while answers are still hidden.
         await new Promise((resolve) => window.setTimeout(resolve, 300));
         setView(VIEW.QUIZ);
+      } catch (error) {
+        setDeckMessage('Could not prepare your questions. Please try starting again.');
+        setView(VIEW.HOME);
       } finally {
         startingRef.current = false;
       }
