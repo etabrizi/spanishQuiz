@@ -1525,9 +1525,6 @@ function App() {
                   {questionsLoading ? 'Loading questions…' : 'Start quiz'}
                 </button>
               </div>
-              {quizMode === QUIZ_MODE.TRANSLATE && (
-                <p className="mode-note">10 seconds per question, rising to 15 after question 10 and 20 after question 20.</p>
-              )}
               {!questionsLoading && quizMode === QUIZ_MODE.TRANSLATE && translateSentenceCount < 3 && (
                 <p className="mode-note">Add more nouns, verbs, or time words in Manage to unlock Translate mode.</p>
               )}
