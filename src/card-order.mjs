@@ -7,6 +7,10 @@ export function shuffleCards(cards, random = Math.random) {
   return shuffled;
 }
 
+export function getTranslationSeconds(cardIndex) {
+  return 10 + Math.floor(cardIndex / 10) * 5;
+}
+
 export function orderPracticeCards(cards, difficultKeys, getQuestionKey, random = Math.random) {
   const difficult = new Set(difficultKeys);
   const flagged = [];
@@ -30,11 +34,13 @@ export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random
   ));
   const tiers = [[], [], []];
   for (const card of cards) {
+    if (card.translationLevel >= 3) continue;
     if (card.tense === 'past' || card.tense === 'future') continue;
     const words = card.question.trim().split(/\s+/).length;
     tiers[words <= 3 ? 0 : words <= 5 ? 1 : 2].push(card);
   }
   const pools = tiers.map((tier) => orderPracticeCards(tier, difficultKeys, getQuestionKey, random));
+  const tenseCount = tensePools.reduce((count, pool) => count + pool.length, 0);
   const ordered = [];
   for (let tier = 0; tier < pools.length; tier += 1) {
     // Edited decks may lack a tier. Use the closest available length without
@@ -42,6 +48,9 @@ export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random
     const candidates = [tier, ...[0, 1, 2].filter((index) => index > tier),
       ...[2, 1, 0].filter((index) => index < tier)];
     let remaining = tier === 2 ? Infinity : 10;
+    // Reserve the tense slots so inserting them cannot delay length increases.
+    if (tier === 0) remaining -= Math.min(1, tenseCount);
+    if (tier === 1) remaining -= Math.min(3, Math.max(0, tenseCount - 1));
     for (const index of candidates) {
       const selected = pools[index].splice(0, remaining);
       ordered.push(...selected);
@@ -59,5 +68,18 @@ export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random
     ordered.splice(index, 0, pool.shift());
     turn += 1;
   }
-  return ordered;
+  // Advanced grammar starts at fixed question boundaries, after tense mixing.
+  // Never pull advanced cards forward to fill gaps in an edited deck.
+  const advanced = [3, 4, 6].map((level) => orderPracticeCards(
+    cards.filter((card) => card.translationLevel === level), difficultKeys, getQuestionKey, random
+  ));
+  if (ordered.length < 30 || !advanced[0].length) return ordered;
+  const result = [...ordered.slice(0, 30), ...advanced[0].slice(0, 10)];
+  if (result.length === 40 && advanced[1].length) {
+    result.push(...advanced[1].slice(0, 20));
+    // Multi-clause conditionals unlock only after 60 completed questions.
+    if (result.length === 60 && advanced[2].length) return [...result, ...advanced[2]];
+    return [...result, ...advanced[1].slice(20)];
+  }
+  return [...result, ...advanced[0].slice(10)];
 }

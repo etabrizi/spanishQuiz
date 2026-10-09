@@ -24,9 +24,10 @@ import {
 import './styles.css';
 import { getLongTranslations } from './long-translations.mjs';
 import { getTenseTranslations } from './tense-translations.mjs';
+import { getAdvancedTranslations } from './advanced-translations.mjs';
 import { isStandaloneAction, canUseNoun, DESTINATIONS } from './translation-rules.mjs';
 import OfflineStatus from './OfflineStatus';
-import { shuffleCards, orderPracticeCards, orderTranslateCards } from './card-order.mjs';
+import { shuffleCards, orderPracticeCards, orderTranslateCards, getTranslationSeconds } from './card-order.mjs';
 
 const FALLBACK_CARDS = [{ question: 'hola', answers: ['hello'] }];
 
@@ -591,7 +592,8 @@ function getTranslateSentenceBank(sourceCards) {
   getLongTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))
     .forEach((card) => addSentence(card.question, card.answers[0]));
 
-  return [...sentences, ...getTenseTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))];
+  const availableWords = sourceCards.map((card) => normalizeAnswer(getCardQuestion(card)));
+  return [...sentences, ...getTenseTranslations(availableWords), ...getAdvancedTranslations(availableWords)];
 }
 
 function getRoundCards(sourceCards, difficultKeys) {
@@ -1218,10 +1220,9 @@ function App() {
 
     setAnswer('');
     const nextCardIndex = cardIndex + 1;
-    const extraSeconds = quizMode === QUIZ_MODE.TRANSLATE
-      ? Math.min(Math.floor(nextCardIndex / 10), 2) * 5
-      : 0;
-    setSecondsLeft(ROUND_SECONDS + extraSeconds);
+    setSecondsLeft(quizMode === QUIZ_MODE.TRANSLATE
+      ? getTranslationSeconds(nextCardIndex)
+      : ROUND_SECONDS);
     setFeedback(null);
     setCardIndex((current) => current + 1);
   }
