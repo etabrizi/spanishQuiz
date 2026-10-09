@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import './styles.css';
 import { getLongTranslations } from './long-translations.mjs';
+import { getTenseTranslations } from './tense-translations.mjs';
 import { isStandaloneAction, canUseNoun, DESTINATIONS } from './translation-rules.mjs';
 import OfflineStatus from './OfflineStatus';
 import { shuffleCards, orderPracticeCards, orderTranslateCards } from './card-order.mjs';
@@ -590,7 +591,7 @@ function getTranslateSentenceBank(sourceCards) {
   getLongTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))
     .forEach((card) => addSentence(card.question, card.answers[0]));
 
-  return sentences;
+  return [...sentences, ...getTenseTranslations(sourceCards.map((card) => normalizeAnswer(getCardQuestion(card))))];
 }
 
 function getRoundCards(sourceCards, difficultKeys) {

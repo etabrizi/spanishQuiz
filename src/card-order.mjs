@@ -25,8 +25,12 @@ export function orderPracticeCards(cards, difficultKeys, getQuestionKey, random 
 // Increase sentence length after each ten correct answers. A wrong answer ends
 // Translate mode, so deck position also represents the player's streak.
 export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random = Math.random) {
+  const tensePools = ['past', 'future'].map((tense) => orderPracticeCards(
+    cards.filter((card) => card.tense === tense), difficultKeys, getQuestionKey, random
+  ));
   const tiers = [[], [], []];
   for (const card of cards) {
+    if (card.tense === 'past' || card.tense === 'future') continue;
     const words = card.question.trim().split(/\s+/).length;
     tiers[words <= 3 ? 0 : words <= 5 ? 1 : 2].push(card);
   }
@@ -44,6 +48,16 @@ export function orderTranslateCards(cards, difficultKeys, getQuestionKey, random
       remaining -= selected.length;
       if (remaining === 0 || (tier === 2 && selected.length)) break;
     }
+  }
+  // Introduce conjugated tenses at question 10, then every third question.
+  // Alternate past and future, preserving flagged priority within each tense.
+  // Short edited decks cannot reach question 10, so retain their basic cards.
+  let turn = 0;
+  for (let index = 9; index <= ordered.length; index += 3) {
+    const pool = tensePools[turn % 2].length ? tensePools[turn % 2] : tensePools[(turn + 1) % 2];
+    if (!pool.length) break;
+    ordered.splice(index, 0, pool.shift());
+    turn += 1;
   }
   return ordered;
 }

@@ -3,6 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import { getLongTranslations } from '../src/long-translations.mjs';
+import { getTenseTranslations } from '../src/tense-translations.mjs';
 import * as rules from '../src/translation-rules.mjs';
 
 // Exercise the actual sentence generator without mounting the React UI.
@@ -10,7 +11,7 @@ const source = readFileSync(new URL('../src/main.jsx', import.meta.url), 'utf8')
 const generate = runInNewContext(
   source.slice(source.indexOf('const NOUN_PHRASES'), source.indexOf('function getRoundCards'))
     + '\ngetTranslateSentenceBank;',
-  { ...rules, getLongTranslations }
+  { ...rules, getLongTranslations, getTenseTranslations }
 );
 const vocabulary = JSON.parse(readFileSync(new URL('../public/questions.json', import.meta.url)));
 const sentences = generate(vocabulary);
